@@ -12,6 +12,7 @@ fun initKoin(
             appDeclaration()
             modules(
                 listOf(
+                    networkModule,
                     databaseModule,
                     repositoryModule,
                     useCaseModule,
