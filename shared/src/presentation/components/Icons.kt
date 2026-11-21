@@ -61,6 +61,53 @@ val CloseIcon: ImageVector
         }
     }.build().also { closeIconCache = it }
 
+private var deleteIconCache: ImageVector? = null
+
+val DeleteIcon: ImageVector
+    get() = deleteIconCache ?: ImageVector.Builder(
+        name = "Delete",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(fill = SolidColor(value = Color.Black)) {
+            moveTo(x = 6f, y = 19f)
+            curveTo(
+                x1 = 6f,
+                y1 = 20.1f,
+                x2 = 6.9f,
+                y2 = 21f,
+                x3 = 8f,
+                y3 = 21f,
+            )
+            horizontalLineTo(x = 16f)
+            curveTo(
+                x1 = 17.1f,
+                y1 = 21f,
+                x2 = 18f,
+                y2 = 20.1f,
+                x3 = 18f,
+                y3 = 19f,
+            )
+            verticalLineTo(y = 7f)
+            horizontalLineTo(x = 6f)
+            verticalLineTo(y = 19f)
+            close()
+
+            moveTo(x = 19f, y = 4f)
+            horizontalLineTo(x = 15.5f)
+            lineTo(x = 14.5f, y = 3f)
+            horizontalLineTo(x = 9.5f)
+            lineTo(x = 8.5f, y = 4f)
+            horizontalLineTo(x = 5f)
+            verticalLineTo(y = 6f)
+            horizontalLineTo(x = 19f)
+            verticalLineTo(y = 4f)
+            close()
+        }
+    }.build().also { deleteIconCache = it }
+
 private var rssFeedIconCache: ImageVector? = null
 
 val RssFeedIcon: ImageVector
