@@ -26,6 +26,10 @@ dependencies@android:
   - $compose.uiTooling
   - $libs.koin.android
 
+test-dependencies:
+  - $kotlin.test
+  - $libs.kotlinx.coroutines.test
+
 settings:
   compose:
     enabled: true

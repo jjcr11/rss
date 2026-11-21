@@ -10,7 +10,13 @@ fun initKoin(
     if (KoinPlatform.getKoinOrNull() == null) {
         startKoin {
             appDeclaration()
-            modules(databaseModule)
+            modules(
+                listOf(
+                    databaseModule,
+                    repositoryModule,
+                    useCaseModule,
+                ),
+            )
         }
     }
 }
