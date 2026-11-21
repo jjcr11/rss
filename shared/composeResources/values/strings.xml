@@ -1,0 +1,7 @@
+<resources>
+    <string name="feeds_title">Feeds</string>
+    <string name="add_feed_action">Add Feed</string>
+    <string name="clear_input">Clear</string>
+    <string name="add_feed_button">ADD FEED</string>
+    <string name="delete_source_content_description">Delete %s</string>
+</resources>

@@ -22,6 +22,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jjcr11.rss.presentation.components.DeleteIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
+import com.jjcr11.rss.resources.Res
+import com.jjcr11.rss.resources.delete_source_content_description
+import org.jetbrains.compose.resources.stringResource
 
 private fun extractInitials(name: String): String {
     val words = name.trim().split(regex = "\\s+".toRegex()).filter { word ->
@@ -92,7 +95,10 @@ fun SourceTile(
         IconButton(onClick = onDeleteClick) {
             Icon(
                 imageVector = DeleteIcon,
-                contentDescription = "Delete $name",
+                contentDescription = stringResource(
+                    resource = Res.string.delete_source_content_description,
+                    formatArgs = arrayOf(name),
+                ),
                 tint = MaterialTheme.colorScheme.error,
             )
         }

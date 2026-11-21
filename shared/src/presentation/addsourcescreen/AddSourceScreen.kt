@@ -35,6 +35,10 @@ import com.jjcr11.rss.presentation.components.AddIcon
 import com.jjcr11.rss.presentation.components.CloseIcon
 import com.jjcr11.rss.presentation.components.RssFeedIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
+import com.jjcr11.rss.resources.Res
+import com.jjcr11.rss.resources.add_feed_button
+import com.jjcr11.rss.resources.clear_input
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AddSourceScreen(
@@ -93,7 +97,7 @@ fun AddSourceScreen(
                                 ) {
                                     Icon(
                                         imageVector = CloseIcon,
-                                        contentDescription = "Clear",
+                                        contentDescription = stringResource(resource = Res.string.clear_input),
                                         modifier = Modifier.size(size = 18.dp),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -123,7 +127,7 @@ fun AddSourceScreen(
                         )
                         Spacer(modifier = Modifier.width(width = 8.dp))
                         Text(
-                            text = "ADD FEED",
+                            text = stringResource(resource = Res.string.add_feed_button),
                             style = MaterialTheme.typography.headlineSmall,
                         )
                     }

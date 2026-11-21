@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.jjcr11.rss.presentation.components.AddIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
+import com.jjcr11.rss.resources.Res
+import com.jjcr11.rss.resources.add_feed_action
+import com.jjcr11.rss.resources.feeds_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FeedsScreen(
@@ -24,13 +28,13 @@ fun FeedsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Feeds")
+                    Text(text = stringResource(resource = Res.string.feeds_title))
                 },
                 actions = {
                     IconButton(onClick = onAddFeedClick) {
                         Icon(
                             imageVector = AddIcon,
-                            contentDescription = "Add Feed",
+                            contentDescription = stringResource(resource = Res.string.add_feed_action),
                         )
                     }
                 },
