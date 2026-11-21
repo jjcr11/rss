@@ -30,6 +30,12 @@ test-dependencies:
   - $kotlin.test
   - $libs.kotlinx.coroutines.test
 
+test-dependencies@jvm:
+  - $libs.kotlinx.coroutines.test
+
+test-dependencies@android:
+  - $libs.kotlinx.coroutines.test
+
 settings:
   compose:
     enabled: true
