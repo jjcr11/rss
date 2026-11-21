@@ -1,0 +1,6 @@
+complexity:
+  NamedArguments:
+    active: true
+    threshold: 1
+    allowedArguments: 1
+    ignoreArgumentsMatchingNames: false
