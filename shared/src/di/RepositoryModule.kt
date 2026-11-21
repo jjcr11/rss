@@ -1,6 +1,8 @@
 package com.jjcr11.rss.di
 
+import com.jjcr11.rss.data.repository.FeedRepositoryImpl
 import com.jjcr11.rss.data.repository.SourceRepositoryImpl
+import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import org.koin.dsl.module
 
@@ -9,6 +11,11 @@ val repositoryModule = module {
         SourceRepositoryImpl(
             sourceDao = get(),
             rssRemoteDataSource = get(),
+        )
+    }
+    single<FeedRepository> {
+        FeedRepositoryImpl(
+            feedDao = get(),
         )
     }
 }
