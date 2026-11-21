@@ -2,6 +2,8 @@ package com.jjcr11.rss.domain.usecase
 
 import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.SourceRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,6 +24,8 @@ class AddSourceUseCaseTest {
             lastFetchedUrl = url
             return sourceToReturn ?: throw IllegalStateException("sourceToReturn not set")
         }
+
+        override fun getAll(): Flow<List<Source>> = flowOf(emptyList())
     }
 
     @Test

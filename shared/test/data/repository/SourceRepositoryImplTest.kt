@@ -12,6 +12,9 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,6 +26,7 @@ class SourceRepositoryImplTest {
     private class FakeSourceDao : SourceDao {
         val insertedSources = mutableListOf<SourceEntity>()
         val insertedFeeds = mutableListOf<FeedEntity>()
+        var sourcesFlow: Flow<List<SourceEntity>> = flowOf(emptyList())
 
         override suspend fun insert(source: SourceEntity) {
             insertedSources.add(element = source)
@@ -31,6 +35,8 @@ class SourceRepositoryImplTest {
         override suspend fun insertFeeds(feeds: List<FeedEntity>) {
             insertedFeeds.addAll(elements = feeds)
         }
+
+        override fun getAll(): Flow<List<SourceEntity>> = sourcesFlow
     }
 
     private fun createRepository(
@@ -149,6 +155,47 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = source.id.toString(),
             actual = dao.insertedFeeds.first().sourceId,
+        )
+    }
+
+    @Test
+    fun getAll_mapsEntitiesToDomainAndEmits() = runTest {
+        val dao = FakeSourceDao()
+        val repository = createRepository(dao = dao)
+        val id = Uuid.random()
+        val now = Clock.System.now()
+        val entity = SourceEntity(
+            id = id.toString(),
+            rssUrl = "https://example.com/feed.xml",
+            webUrl = "https://example.com",
+            name = "Test Feed",
+            createdAt = now.toEpochMilliseconds(),
+            updatedAt = now.toEpochMilliseconds(),
+        )
+        dao.sourcesFlow = flowOf(value = listOf(entity))
+
+        val sources = repository.getAll().first()
+
+        assertEquals(
+            expected = 1,
+            actual = sources.size,
+        )
+        val domain = sources.first()
+        assertEquals(
+            expected = id,
+            actual = domain.id,
+        )
+        assertEquals(
+            expected = "https://example.com/feed.xml",
+            actual = domain.rssUrl,
+        )
+        assertEquals(
+            expected = "https://example.com",
+            actual = domain.webUrl,
+        )
+        assertEquals(
+            expected = "Test Feed",
+            actual = domain.name,
         )
     }
 }
