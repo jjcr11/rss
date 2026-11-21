@@ -8,6 +8,7 @@ val repositoryModule = module {
     single<SourceRepository> {
         SourceRepositoryImpl(
             sourceDao = get(),
+            rssRemoteDataSource = get(),
         )
     }
 }

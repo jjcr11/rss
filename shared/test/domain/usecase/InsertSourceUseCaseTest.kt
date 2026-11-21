@@ -16,6 +16,10 @@ class InsertSourceUseCaseTest {
         override suspend fun insert(source: Source) {
             insertedSources.add(element = source)
         }
+
+        override suspend fun fetchAndSave(url: String): Source {
+            throw NotImplementedError()
+        }
     }
 
     @Test
