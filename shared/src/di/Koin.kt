@@ -16,6 +16,7 @@ fun initKoin(
                     databaseModule,
                     repositoryModule,
                     useCaseModule,
+                    presentationModule,
                 ),
             )
         }
