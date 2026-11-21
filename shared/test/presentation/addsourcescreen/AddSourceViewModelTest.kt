@@ -3,8 +3,11 @@ package com.jjcr11.rss.presentation.addsourcescreen
 import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
+import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -29,6 +32,8 @@ class AddSourceViewModelTest {
         var lastFetchedUrl: String? = null
         var sourceToReturn: Source? = null
         var shouldThrow: Exception? = null
+        val savedSources = mutableListOf<Source>()
+        val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
 
         override suspend fun insert(source: Source) {
             throw NotImplementedError()
@@ -37,20 +42,30 @@ class AddSourceViewModelTest {
         override suspend fun fetchAndSave(url: String): Source {
             lastFetchedUrl = url
             shouldThrow?.let { throw it }
-            return sourceToReturn ?: throw IllegalStateException("sourceToReturn not set")
+            val source = sourceToReturn ?: throw IllegalStateException("sourceToReturn not set")
+            savedSources.add(element = source)
+            sourcesFlow.value = savedSources.toList()
+            return source
         }
+
+        override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 
     private lateinit var repository: FakeSourceRepository
-    private lateinit var useCase: AddSourceUseCase
+    private lateinit var addSourceUseCase: AddSourceUseCase
+    private lateinit var getSourcesUseCase: GetSourcesUseCase
     private lateinit var viewModel: AddSourceViewModel
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         repository = FakeSourceRepository()
-        useCase = AddSourceUseCase(repository = repository)
-        viewModel = AddSourceViewModel(addSourceUseCase = useCase)
+        addSourceUseCase = AddSourceUseCase(repository = repository)
+        getSourcesUseCase = GetSourcesUseCase(repository = repository)
+        viewModel = AddSourceViewModel(
+            addSourceUseCase = addSourceUseCase,
+            getSourcesUseCase = getSourcesUseCase,
+        )
     }
 
     @AfterTest
@@ -65,6 +80,30 @@ class AddSourceViewModelTest {
         assertTrue(actual = sources.isEmpty())
         assertFalse(actual = isLoading)
         assertNull(actual = errorMessage)
+    }
+
+    @Test
+    fun init_observesSavedSourcesFromGetSourcesUseCase() = runTest(context = testDispatcher) {
+        val existingSource = Source(
+            id = Uuid.random(),
+            rssUrl = "https://example.com/existing.xml",
+            webUrl = "https://example.com",
+            name = "Existing Source",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+        )
+        repository.sourcesFlow.value = listOf(existingSource)
+        advanceUntilIdle()
+
+        val (sources) = viewModel.uiState.value
+        assertEquals(
+            expected = 1,
+            actual = sources.size,
+        )
+        assertEquals(
+            expected = "Existing Source",
+            actual = sources[0].name,
+        )
     }
 
     @Test

@@ -8,6 +8,7 @@ val presentationModule = module {
     viewModel {
         AddSourceViewModel(
             addSourceUseCase = get(),
+            getSourcesUseCase = get(),
         )
     }
 }
