@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jjcr11.rss.presentation.components.AddIcon
 import com.jjcr11.rss.presentation.components.CloseIcon
 import com.jjcr11.rss.presentation.components.RssFeedIcon
@@ -39,11 +41,28 @@ import com.jjcr11.rss.resources.Res
 import com.jjcr11.rss.resources.add_feed_button
 import com.jjcr11.rss.resources.clear_input
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+
+@Composable
+fun AddSourceRoute(
+    modifier: Modifier = Modifier,
+    viewModel: AddSourceViewModel = koinViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    AddSourceScreen(
+        modifier = modifier,
+        uiState = uiState,
+        onAddFeedClick = { url ->
+            viewModel.onEvent(event = AddSourceUiEvent.AddFeed(url = url))
+        },
+    )
+}
 
 @Composable
 fun AddSourceScreen(
     modifier: Modifier = Modifier,
-    sources: List<SourceUiModel> = emptyList(),
+    uiState: AddSourceUiState = AddSourceUiState(),
     onAddFeedClick: (String) -> Unit = {},
     onDeleteSourceClick: (SourceUiModel) -> Unit = {},
 ) {
@@ -107,6 +126,14 @@ fun AddSourceScreen(
                         singleLine = true,
                     )
 
+                    uiState.errorMessage?.let { errorMessage ->
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+
                     Button(
                         onClick = {
                             onAddFeedClick(url)
@@ -114,22 +141,31 @@ fun AddSourceScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(height = 48.dp),
+                        enabled = !uiState.isLoading,
                         shape = RoundedCornerShape(size = 8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                         ),
                     ) {
-                        Icon(
-                            imageVector = AddIcon,
-                            contentDescription = null,
-                            modifier = Modifier.size(size = 20.dp),
-                        )
-                        Spacer(modifier = Modifier.width(width = 8.dp))
-                        Text(
-                            text = stringResource(resource = Res.string.add_feed_button),
-                            style = MaterialTheme.typography.headlineSmall,
-                        )
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(size = 20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = AddIcon,
+                                contentDescription = null,
+                                modifier = Modifier.size(size = 20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(width = 8.dp))
+                            Text(
+                                text = stringResource(resource = Res.string.add_feed_button),
+                                style = MaterialTheme.typography.headlineSmall,
+                            )
+                        }
                     }
                 }
             }
@@ -139,7 +175,7 @@ fun AddSourceScreen(
             }
 
             items(
-                items = sources,
+                items = uiState.sources,
                 key = { source -> source.id },
             ) { source ->
                 SourceTile(

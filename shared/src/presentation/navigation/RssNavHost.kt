@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.jjcr11.rss.presentation.addsourcescreen.AddSourceScreen
+import com.jjcr11.rss.presentation.addsourcescreen.AddSourceRoute
 import com.jjcr11.rss.presentation.feedsscreen.FeedsScreen
 
 @Composable
@@ -25,7 +25,7 @@ fun RssNavHost(
             }
         }
         composable(route = Screen.AddSource.route) {
-            AddSourceScreen()
+            AddSourceRoute()
         }
     }
 }
