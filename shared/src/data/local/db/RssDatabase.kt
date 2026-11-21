@@ -20,7 +20,7 @@ abstract class RssDatabase : RoomDatabase() {
     abstract fun feedDao(): FeedDao
 }
 
-@Suppress("NO_ACTUAL_FOR_EXPECT")
+@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect")
 expect object RssDatabaseConstructor : RoomDatabaseConstructor<RssDatabase> {
     override fun initialize(): RssDatabase
 }

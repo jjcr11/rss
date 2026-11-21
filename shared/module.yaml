@@ -22,13 +22,27 @@ dependencies:
   - $libs.androidx.room.runtime
   - $libs.androidx.sqlite.bundled
 
+  # Ktor Client
+  - $libs.ktor.client.core
+
+  # Ksoup (XML Parser)
+  - $libs.ksoup
+
+dependencies@jvm:
+  - $libs.ktor.client.cio
+
 dependencies@android:
   - $compose.uiTooling
   - $libs.koin.android
+  - $libs.ktor.client.okhttp
+
+dependencies@ios:
+  - $libs.ktor.client.darwin
 
 test-dependencies:
   - $kotlin.test
   - $libs.kotlinx.coroutines.test
+  - $libs.ktor.client.mock
 
 test-dependencies@jvm:
   - $libs.kotlinx.coroutines.test
@@ -44,6 +58,8 @@ settings:
       # Generate public accessors so other modules (and previews) can use Res.*
       exposedAccessors: true
   kotlin:
+    freeCompilerArgs:
+      - -Xexpect-actual-classes
     ksp:
       processors:
         - $libs.androidx.room.compiler
