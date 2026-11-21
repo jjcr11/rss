@@ -1,0 +1,26 @@
+package com.jjcr11.rss.data.local.db
+
+import androidx.room.ConstructedBy
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
+import com.jjcr11.rss.data.local.dao.FeedDao
+import com.jjcr11.rss.data.local.dao.SourceDao
+import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.SourceEntity
+
+@Database(
+    entities = [SourceEntity::class, FeedEntity::class],
+    version = 1,
+    exportSchema = false,
+)
+@ConstructedBy(RssDatabaseConstructor::class)
+abstract class RssDatabase : RoomDatabase() {
+    abstract fun sourceDao(): SourceDao
+    abstract fun feedDao(): FeedDao
+}
+
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object RssDatabaseConstructor : RoomDatabaseConstructor<RssDatabase> {
+    override fun initialize(): RssDatabase
+}
