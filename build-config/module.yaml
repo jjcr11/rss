@@ -1,1 +1,4 @@
 product: jvm/amper-plugin
+
+pluginInfo:
+  id: build-config

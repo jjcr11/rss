@@ -13,8 +13,8 @@ import org.jetbrains.amper.plugins.Input
 import org.jetbrains.amper.plugins.Output
 import org.jetbrains.amper.plugins.TaskAction
 
-@TaskAction
 @OptIn(ExperimentalPathApi::class)
+@TaskAction
 fun generateBuildConfig(
     @Input propertiesFile: Path,
     @Output generatedSourceDir: Path,
