@@ -2,6 +2,9 @@ product:
   type: kmp/lib
   platforms: [ jvm, android, iosArm64, iosSimulatorArm64 ]
 
+plugins:
+  build-config: enabled
+
 dependencies:
   - $compose.runtime
   - $compose.foundation
@@ -16,6 +19,12 @@ dependencies:
 
   # Date / Time
   - $libs.kotlinx.datetime
+
+  # Serialization
+  - $kotlin.serialization.json
+
+  # Supabase
+  - $libs.supabase.postgrest
 
   # Koin DI
   - $libs.koin.core
@@ -62,6 +71,7 @@ settings:
       # Generate public accessors so other modules (and previews) can use Res.*
       exposedAccessors: true
   kotlin:
+    serialization: enabled
     freeCompilerArgs:
       - -Xexpect-actual-classes
     ksp:

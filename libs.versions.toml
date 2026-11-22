@@ -12,6 +12,7 @@ sqlite = "2.5.1"
 koin = "4.2.2"
 ktor = "3.1.1"
 ksoup = "0.2.6"
+supabase = "3.1.1"
 
 [libraries]
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
@@ -46,3 +47,6 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 # Ksoup (HTML/XML parser)
 ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
+
+# Supabase
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "supabase" }
