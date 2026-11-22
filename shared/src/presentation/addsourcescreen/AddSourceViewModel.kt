@@ -2,6 +2,7 @@ package com.jjcr11.rss.presentation.addsourcescreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
@@ -30,7 +31,9 @@ class AddSourceViewModel(
             try {
                 listenToRealtimeSourcesUseCase()
             } catch (e: Exception) {
-                println("Realtime sources failed: ${e.message}")
+                Logger.withTag(tag = TAG).e(throwable = e) {
+                    "Realtime sources failed"
+                }
             }
         }
     }
@@ -88,5 +91,9 @@ class AddSourceViewModel(
         _uiState.update { currentState ->
             currentState.copy(errorMessage = null)
         }
+    }
+
+    private companion object {
+        const val TAG = "AddSourceViewModel"
     }
 }

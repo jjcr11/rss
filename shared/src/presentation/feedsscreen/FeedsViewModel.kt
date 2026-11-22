@@ -2,6 +2,7 @@ package com.jjcr11.rss.presentation.feedsscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
@@ -31,7 +32,9 @@ class FeedsViewModel(
             try {
                 syncSourcesUseCase()
             } catch (e: Exception) {
-                println("Sync sources failed (offline mode): ${e.message}")
+                Logger.withTag(tag = TAG).w(throwable = e) {
+                    "Sync sources failed (offline mode)"
+                }
             }
         }
     }
@@ -58,5 +61,9 @@ class FeedsViewModel(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val TAG = "FeedsViewModel"
     }
 }
