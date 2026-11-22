@@ -51,3 +51,25 @@ Cuando el usuario solicite realizar un commit o preparar commits:
   1. Restringir los permisos del rol `anon` (por ejemplo solo lectura o ningún acceso según aplique).
   2. Agregar `user_id UUID REFERENCES auth.users(id)` a las tablas.
   3. Configurar políticas RLS estrictas vinculadas a `auth.uid() = user_id` para aislar los datos por usuario.
+
+---
+
+## Sincronización Offline-First (Memoria de Proyecto)
+- **Estado Actual:** Por el momento solo se realiza inserción hacia Supabase al añadir fuentes (`insert` / `fetchAndSave`), mientras que la UI observa Room como Única Fuente de Verdad (SSOT).
+- **Pendiente para el Futuro:** Implementar la sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase`) para descargar fuentes desde Supabase a Room (ej. al inicio de la app, pull-to-refresh o mediante tareas en background con WorkManager). Se acordó que el diseño es correcto pero se aplaza para no salir del alcance actual.
+
+---
+
+## Supabase Auth (Memoria de Proyecto)
+- **Autenticación Opcional (Modo Invitado vs Registrado):** El inicio de sesión / registro con Supabase Auth será completamente opcional.
+  - **Modo Invitado / Sin Cuenta:** El usuario puede saltarse el login y utilizar la app de forma 100% local, usando Room como almacenamiento exclusivo y sin interactuar con Supabase.
+  - **Modo Registrado:** Permite respaldo y sincronización remota de fuentes y feeds en la nube.
+  - **Migración de Datos:** Si un usuario invitado decide registrarse posteriormente, se contemplará migrar y subir sus fuentes locales existentes en Room a su nueva cuenta en Supabase.
+- **Pendiente para el Futuro:** Implementar los flujos de autenticación (inicio de sesión, registro y gestión de sesión persistente), así como la vinculación de la sesión con el aislamiento de datos por usuario en Supabase (`user_id = auth.uid()`).
+
+---
+
+## UI Adaptativa / Modo Tablet (Memoria de Proyecto)
+- **Pendiente para el Futuro:** Implementar diseño adaptativo para tablets y pantallas grandes en Compose Multiplatform (layout de dos paneles / *Two-Pane* / *List-Detail*). Permitirá aprovechar pantallas de mayor tamaño mostrando simultáneamente la lista de fuentes/artículos y el detalle o visor del feed.
+
+
