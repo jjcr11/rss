@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jjcr11.rss.presentation.components.RssButton
 import com.jjcr11.rss.presentation.components.RssFeedIcon
 import com.jjcr11.rss.presentation.components.RssTextField
@@ -38,12 +39,37 @@ import com.jjcr11.rss.resources.password_placeholder
 import com.jjcr11.rss.resources.sign_up_button
 import com.jjcr11.rss.resources.sign_up_with_google_button
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+
+@Composable
+fun AuthRoute(
+    modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = koinViewModel(),
+    onGoogleSignUpClick: () -> Unit = {},
+    onContinueWithoutAccountClick: () -> Unit = {},
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    AuthScreen(
+        modifier = modifier,
+        uiState = uiState,
+        onSignUpClick = { email, password ->
+            viewModel.onEvent(
+                event = AuthUiEvent.SignUpWithEmail(
+                    email = email,
+                    password = password,
+                ),
+            )
+        },
+        onGoogleSignUpClick = onGoogleSignUpClick,
+        onContinueWithoutAccountClick = onContinueWithoutAccountClick,
+    )
+}
 
 @Composable
 fun AuthScreen(
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false,
-    errorMessage: String? = null,
+    uiState: AuthUiState = AuthUiState(),
     onSignUpClick: (email: String, password: String) -> Unit = { _, _ -> },
     onGoogleSignUpClick: () -> Unit = {},
     onContinueWithoutAccountClick: () -> Unit = {},
@@ -110,7 +136,7 @@ fun AuthScreen(
                 ),
             )
 
-            errorMessage?.let { message ->
+            uiState.errorMessage?.let { message ->
                 Spacer(modifier = Modifier.height(height = 8.dp))
                 Text(
                     text = message,
@@ -126,7 +152,7 @@ fun AuthScreen(
                 onClick = {
                     onSignUpClick(email, password)
                 },
-                isLoading = isLoading,
+                isLoading = uiState.isLoading,
             )
 
             Spacer(modifier = Modifier.height(height = 16.dp))
@@ -141,7 +167,7 @@ fun AuthScreen(
             RssButton(
                 text = stringResource(resource = Res.string.sign_up_with_google_button),
                 onClick = onGoogleSignUpClick,
-                enabled = !isLoading,
+                enabled = !uiState.isLoading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -152,7 +178,7 @@ fun AuthScreen(
 
             TextButton(
                 onClick = onContinueWithoutAccountClick,
-                enabled = !isLoading,
+                enabled = !uiState.isLoading,
             ) {
                 Text(
                     text = stringResource(resource = Res.string.continue_without_account_button),
