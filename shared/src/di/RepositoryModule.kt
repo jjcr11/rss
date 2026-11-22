@@ -19,6 +19,7 @@ val repositoryModule = module {
     single<FeedRepository> {
         FeedRepositoryImpl(
             feedDao = get(),
+            supabaseRemoteDataSource = get(),
         )
     }
     single<AuthRepository> {

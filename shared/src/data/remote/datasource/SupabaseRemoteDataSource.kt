@@ -28,6 +28,11 @@ open class SupabaseRemoteDataSource(
             .select()
             .decodeList()
 
+    open suspend fun getFeeds(): List<FeedDto> =
+        supabaseClient.from(table = FEEDS_TABLE)
+            .select()
+            .decodeList()
+
     open fun observeSources(): Flow<SourceDto> =
         flow {
             val channel = supabaseClient.channel(channelId = "source-channel")

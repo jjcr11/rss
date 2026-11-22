@@ -5,4 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface FeedRepository {
     fun getAll(): Flow<List<Feed>>
+
+    suspend fun syncFeeds()
 }

@@ -6,6 +6,7 @@ import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,8 +34,15 @@ class FeedsViewModelTest {
 
     private class FakeFeedRepository : FeedRepository {
         val feedsFlow = MutableStateFlow<List<Feed>>(value = emptyList())
+        var syncFeedsCalled = false
+        var syncFeedsShouldThrow: Exception? = null
 
         override fun getAll(): Flow<List<Feed>> = feedsFlow
+
+        override suspend fun syncFeeds() {
+            syncFeedsCalled = true
+            syncFeedsShouldThrow?.let { throw it }
+        }
     }
 
     private class FakeSourceRepository : SourceRepository {
@@ -63,6 +71,7 @@ class FeedsViewModelTest {
     private lateinit var getFeedsUseCase: GetFeedsUseCase
     private lateinit var getSourcesUseCase: GetSourcesUseCase
     private lateinit var syncSourcesUseCase: SyncSourcesUseCase
+    private lateinit var syncFeedsUseCase: SyncFeedsUseCase
     private lateinit var viewModel: FeedsViewModel
 
     @BeforeTest
@@ -73,10 +82,12 @@ class FeedsViewModelTest {
         getFeedsUseCase = GetFeedsUseCase(repository = feedRepository)
         getSourcesUseCase = GetSourcesUseCase(repository = sourceRepository)
         syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository)
+        syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository)
         viewModel = FeedsViewModel(
             getFeedsUseCase = getFeedsUseCase,
             getSourcesUseCase = getSourcesUseCase,
             syncSourcesUseCase = syncSourcesUseCase,
+            syncFeedsUseCase = syncFeedsUseCase,
         )
     }
 
@@ -86,7 +97,15 @@ class FeedsViewModelTest {
     }
 
     @Test
-    fun init_observesFeedsAndMapsSourceName() = runTest(context = testDispatcher) {
+    fun initialState_hasEmptyFeedsAndLoadingTrue() {
+        val (feeds, isLoading) = viewModel.uiState.value
+
+        assertTrue(actual = feeds.isEmpty())
+        assertTrue(actual = isLoading)
+    }
+
+    @Test
+    fun init_observesFeedsAndMapsSourceNameCorrectly() = runTest(context = testDispatcher) {
         val sourceId = Uuid.random()
         val instant = Instant.parse(input = "2024-11-04T10:00:00Z")
         val source = Source(
@@ -165,10 +184,14 @@ class FeedsViewModelTest {
     }
 
     @Test
-    fun init_triggersSyncSources() = runTest {
+    fun init_triggersSyncSourcesAndSyncFeeds() = runTest {
         assertEquals(
             expected = true,
             actual = sourceRepository.syncSourcesCalled,
+        )
+        assertEquals(
+            expected = true,
+            actual = feedRepository.syncFeedsCalled,
         )
     }
 
@@ -181,10 +204,28 @@ class FeedsViewModelTest {
             getFeedsUseCase = getFeedsUseCase,
             getSourcesUseCase = GetSourcesUseCase(repository = failingRepo),
             syncSourcesUseCase = SyncSourcesUseCase(repository = failingRepo),
+            syncFeedsUseCase = syncFeedsUseCase,
         )
         advanceUntilIdle()
 
         assertTrue(actual = failingRepo.syncSourcesCalled)
+        assertFalse(actual = failingViewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun init_whenSyncFeedsThrowsCancellationException_rethrowsCleanly() = runTest(context = testDispatcher) {
+        val failingRepo = FakeFeedRepository().apply {
+            syncFeedsShouldThrow = CancellationException("Job was cancelled")
+        }
+        val failingViewModel = FeedsViewModel(
+            getFeedsUseCase = getFeedsUseCase,
+            getSourcesUseCase = getSourcesUseCase,
+            syncSourcesUseCase = syncSourcesUseCase,
+            syncFeedsUseCase = SyncFeedsUseCase(repository = failingRepo),
+        )
+        advanceUntilIdle()
+
+        assertTrue(actual = failingRepo.syncFeedsCalled)
         assertFalse(actual = failingViewModel.uiState.value.isLoading)
     }
 }

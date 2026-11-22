@@ -17,6 +17,8 @@ class GetFeedsUseCaseTest {
         var feedsFlow: Flow<List<Feed>> = flowOf(emptyList())
 
         override fun getAll(): Flow<List<Feed>> = feedsFlow
+
+        override suspend fun syncFeeds() = Unit
     }
 
     @Test

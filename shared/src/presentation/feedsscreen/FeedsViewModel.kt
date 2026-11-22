@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,25 +19,27 @@ class FeedsViewModel(
     private val getFeedsUseCase: GetFeedsUseCase,
     private val getSourcesUseCase: GetSourcesUseCase,
     private val syncSourcesUseCase: SyncSourcesUseCase,
+    private val syncFeedsUseCase: SyncFeedsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = FeedsUiState(isLoading = true))
     val uiState: StateFlow<FeedsUiState> = _uiState.asStateFlow()
 
     init {
-        syncSources()
+        sync()
         observeFeeds()
     }
 
-    private fun syncSources() {
+    private fun sync() {
         viewModelScope.launch {
             try {
                 syncSourcesUseCase()
+                syncFeedsUseCase()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Logger.withTag(tag = TAG).w(throwable = e) {
-                    "Sync sources failed (offline mode)"
+                    "Sync failed (offline mode)"
                 }
             }
         }

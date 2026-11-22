@@ -115,4 +115,47 @@ class RssDatabaseTest {
         assertEquals(expected = 1, actual = sources.size)
         assertEquals(expected = "Original Name", actual = sources.first().name)
     }
+
+    @Test
+    fun insertFeeds_savesAndRetrievesFromFeedDao() = runTest {
+        val source = SourceEntity(
+            id = "src-feed-test",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Source for Feeds",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+
+        val feed1 = FeedEntity(
+            id = "feed-a",
+            sourceId = "src-feed-test",
+            title = "Article A",
+            read = false,
+            save = false,
+            url = "https://example.com/a",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed2 = FeedEntity(
+            id = "feed-b",
+            sourceId = "src-feed-test",
+            title = "Article B",
+            read = true,
+            save = true,
+            url = "https://example.com/b",
+            date = 2000L,
+            createdAt = 2000L,
+            updatedAt = 2000L,
+        )
+
+        feedDao.insert(feeds = listOf(feed1, feed2))
+
+        val feeds = feedDao.getAll().first()
+        assertEquals(expected = 2, actual = feeds.size)
+        assertEquals(expected = "feed-b", actual = feeds[0].id)
+        assertEquals(expected = "feed-a", actual = feeds[1].id)
+    }
 }

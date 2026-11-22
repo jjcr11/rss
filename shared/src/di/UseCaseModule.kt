@@ -8,6 +8,7 @@ import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
 import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
+import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import org.koin.dsl.module
 
@@ -29,6 +30,11 @@ val useCaseModule = module {
     }
     factory {
         SyncSourcesUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        SyncFeedsUseCase(
             repository = get(),
         )
     }

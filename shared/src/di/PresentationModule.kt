@@ -20,6 +20,7 @@ val presentationModule = module {
             getFeedsUseCase = get(),
             getSourcesUseCase = get(),
             syncSourcesUseCase = get(),
+            syncFeedsUseCase = get(),
         )
     }
     viewModel {
