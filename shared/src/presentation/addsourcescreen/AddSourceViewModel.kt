@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class AddSourceViewModel(
     private val addSourceUseCase: AddSourceUseCase,
@@ -30,6 +31,8 @@ class AddSourceViewModel(
         viewModelScope.launch {
             try {
                 listenToRealtimeSourcesUseCase()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.withTag(tag = TAG).e(throwable = e) {
                     "Realtime sources failed"
@@ -76,6 +79,8 @@ class AddSourceViewModel(
                         errorMessage = null,
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { currentState ->
                     currentState.copy(

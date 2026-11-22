@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -36,6 +37,7 @@ class AddSourceViewModelTest {
         val savedSources = mutableListOf<Source>()
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
         var listenToRealtimeSourcesCalled = false
+        var realtimeShouldThrow: Exception? = null
 
         override suspend fun fetchAndSave(url: String): Source {
             lastFetchedUrl = url
@@ -52,6 +54,7 @@ class AddSourceViewModelTest {
 
         override suspend fun listenToRealtimeSources() {
             listenToRealtimeSourcesCalled = true
+            realtimeShouldThrow?.let { throw it }
         }
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
@@ -199,5 +202,31 @@ class AddSourceViewModelTest {
         viewModel.onEvent(event = AddSourceUiEvent.ClearError)
 
         assertNull(actual = viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun onEvent_addFeed_whenCancellationExceptionThrown_doesNotSetErrorMessage() = runTest(context = testDispatcher) {
+        repository.shouldThrow = CancellationException("Job was cancelled")
+
+        viewModel.onEvent(event = AddSourceUiEvent.AddFeed(url = "https://example.com/rss"))
+        advanceUntilIdle()
+
+        assertNull(actual = viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun init_whenListenToRealtimeSourcesThrowsCancellationException_rethrowsCleanly() = runTest(context = testDispatcher) {
+        val failingRepo = FakeSourceRepository().apply {
+            realtimeShouldThrow = CancellationException("Job was cancelled")
+        }
+        val failingViewModel = AddSourceViewModel(
+            addSourceUseCase = AddSourceUseCase(repository = failingRepo),
+            getSourcesUseCase = GetSourcesUseCase(repository = failingRepo),
+            listenToRealtimeSourcesUseCase = ListenToRealtimeSourcesUseCase(repository = failingRepo),
+        )
+        advanceUntilIdle()
+
+        assertTrue(actual = failingRepo.listenToRealtimeSourcesCalled)
+        assertNull(actual = failingViewModel.uiState.value.errorMessage)
     }
 }

@@ -8,8 +8,10 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.decodeRecord
 import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 
 open class SupabaseRemoteDataSource(
     private val supabaseClient: SupabaseClient,
@@ -38,7 +40,13 @@ open class SupabaseRemoteDataSource(
                     emit(action.decodeRecord<SourceDto>())
                 }
             } finally {
-                channel.unsubscribe()
+                withContext(context = NonCancellable) {
+                    try {
+                        channel.unsubscribe()
+                    } catch (_: Exception) {
+                        // Ignore unsubscribe errors during cancellation
+                    }
+                }
             }
         }
 

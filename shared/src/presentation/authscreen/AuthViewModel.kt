@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthViewModel(
     private val authenticateWithEmailUseCase: AuthenticateWithEmailUseCase,
@@ -50,6 +51,8 @@ class AuthViewModel(
                         errorMessage = null,
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { currentState ->
                     currentState.copy(

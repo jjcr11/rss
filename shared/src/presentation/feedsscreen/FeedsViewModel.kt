@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class FeedsViewModel(
     private val getFeedsUseCase: GetFeedsUseCase,
@@ -31,6 +32,8 @@ class FeedsViewModel(
         viewModelScope.launch {
             try {
                 syncSourcesUseCase()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.withTag(tag = TAG).w(throwable = e) {
                     "Sync sources failed (offline mode)"

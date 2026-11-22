@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -158,6 +159,22 @@ class AuthViewModelTest {
 
         viewModel.onEvent(event = AuthUiEvent.ClearError)
 
+        assertNull(actual = viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun onEvent_authenticateWithEmail_whenCancellationExceptionThrown_doesNotSetErrorMessage() = runTest {
+        repository.shouldThrow = CancellationException("Job was cancelled")
+
+        viewModel.onEvent(
+            event = AuthUiEvent.AuthenticateWithEmail(
+                email = "user@example.com",
+                password = "password123",
+            ),
+        )
+        advanceUntilIdle()
+
+        assertFalse(actual = viewModel.uiState.value.isSuccess)
         assertNull(actual = viewModel.uiState.value.errorMessage)
     }
 }

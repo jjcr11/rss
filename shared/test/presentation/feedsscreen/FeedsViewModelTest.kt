@@ -16,11 +16,13 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -38,6 +40,7 @@ class FeedsViewModelTest {
     private class FakeSourceRepository : SourceRepository {
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
         var syncSourcesCalled = false
+        var syncShouldThrow: Exception? = null
 
         override suspend fun fetchAndSave(url: String): Source {
             throw NotImplementedError()
@@ -45,6 +48,7 @@ class FeedsViewModelTest {
 
         override suspend fun syncSources() {
             syncSourcesCalled = true
+            syncShouldThrow?.let { throw it }
         }
 
         override suspend fun listenToRealtimeSources() {
@@ -166,5 +170,21 @@ class FeedsViewModelTest {
             expected = true,
             actual = sourceRepository.syncSourcesCalled,
         )
+    }
+
+    @Test
+    fun init_whenSyncSourcesThrowsCancellationException_rethrowsCleanly() = runTest(context = testDispatcher) {
+        val failingRepo = FakeSourceRepository().apply {
+            syncShouldThrow = CancellationException("Job was cancelled")
+        }
+        val failingViewModel = FeedsViewModel(
+            getFeedsUseCase = getFeedsUseCase,
+            getSourcesUseCase = GetSourcesUseCase(repository = failingRepo),
+            syncSourcesUseCase = SyncSourcesUseCase(repository = failingRepo),
+        )
+        advanceUntilIdle()
+
+        assertTrue(actual = failingRepo.syncSourcesCalled)
+        assertFalse(actual = failingViewModel.uiState.value.isLoading)
     }
 }
