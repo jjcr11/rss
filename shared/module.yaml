@@ -26,6 +26,7 @@ dependencies:
   # Supabase
   - $libs.supabase.postgrest
   - $libs.supabase.realtime
+  - $libs.supabase.auth
 
   # Koin DI
   - $libs.koin.core
