@@ -77,4 +77,11 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 - **Motivo y Necesidad:** Al arrancar la aplicación, el estado de sesión de Supabase Auth se inicializa de forma asíncrona desde el almacenamiento (`AuthState.Initializing`), y paralelamente se debe evaluar si el usuario ya eligió previamente utilizar la app en Modo Invitado (`isGuestMode`). Si se renderizara la interfaz inmediatamente sin aguardar dicha inicialización, ocurriría un parpadeo visual (*flicker*), mostrando fugazmente la pantalla de autenticación antes de redirigir a `FeedsScreen`.
 - **Pendiente para el Futuro:** Implementar una pantalla o estado de Splash Screen que retenga el arranque hasta que se resuelva la inicialización de `AuthState` y la preferencia de Modo Invitado, redirigiendo de forma suave y definitiva a `FeedsScreen` (si está autenticado o en modo invitado) o a `AuthScreen` (si es un usuario nuevo por primera vez).
 
+---
+
+## Autenticación con Google (Memoria de Proyecto)
+- **Estado Actual:** El botón para iniciar sesión con Google en `AuthScreen` se encuentra temporalmente comentado para enfocar y estabilizar primero el flujo de registro por correo/contraseña y modo invitado.
+- **Pendiente para el Futuro:** Implementar la integración de Google Sign-In con Supabase Auth (flujo OAuth / Credential Manager según la plataforma) y rehabilitar el botón en `AuthScreen`.
+
+
 
