@@ -54,8 +54,8 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 ---
 
 ## Sincronización Offline-First (Memoria de Proyecto)
-- **Estado Actual:** Por el momento solo se realiza inserción hacia Supabase al añadir fuentes (`insert` / `fetchAndSave`), mientras que la UI observa Room como Única Fuente de Verdad (SSOT).
-- **Pendiente para el Futuro:** Implementar la sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase`) para descargar fuentes desde Supabase a Room (ej. al inicio de la app, pull-to-refresh o mediante tareas en background con WorkManager). Se acordó que el diseño es correcto pero se aplaza para no salir del alcance actual.
+- **Estado Actual:** Sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase` y `syncFeeds()` / `SyncFeedsUseCase`) implementada para descargar fuentes y feeds desde Supabase a Room al inicializar `FeedsViewModel`, preservando Room como la Única Fuente de Verdad (SSOT).
+- **Pendiente para el Futuro:** Implementar sincronización periódica en segundo plano (WorkManager) o mediante interacción de usuario (pull-to-refresh en `FeedsScreen`).
 
 ---
 
