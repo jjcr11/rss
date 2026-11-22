@@ -46,11 +46,10 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 ---
 
 ## Supabase & Seguridad (Memoria de Proyecto)
-- **Estado Actual (Desarrollo):** Las tablas `public.sources` y `public.feeds` tienen `GRANT ALL` para `anon, authenticated` y políticas RLS abiertas para `anon` (`USING (true)`). Esto es temporal y válido **únicamente durante la fase de desarrollo** para facilitar la integración inicial de PostgREST sin autenticación.
-- **Pendiente para Producción (Seguridad):** En el futuro, cuando se implemente Supabase Auth (o antes de pasar a producción), se debe migrar la seguridad:
-  1. Restringir los permisos del rol `anon` (por ejemplo solo lectura o ningún acceso según aplique).
-  2. Agregar `user_id UUID REFERENCES auth.users(id)` a las tablas.
-  3. Configurar políticas RLS estrictas vinculadas a `auth.uid() = user_id` para aislar los datos por usuario.
+- **Estado Actual:** Las tablas `public.sources` y `public.feeds` tienen Row Level Security (RLS) habilitado y permisos restringidos exclusivamente al rol `authenticated`. El rol `anon` tiene permisos revocados.
+  1. `public.sources`: Contiene `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid()`. Política RLS vinculada a `auth.uid() = user_id`.
+  2. `public.feeds`: No duplica `user_id`; su política RLS protege los datos mediante subconsulta `EXISTS (SELECT 1 FROM public.sources WHERE sources.id = feeds.source_id AND sources.user_id = auth.uid())`.
+  3. Rendimiento: Creados índices en `sources(user_id)` y `feeds(source_id)`.
 
 ---
 
