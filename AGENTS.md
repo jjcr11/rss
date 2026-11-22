@@ -71,4 +71,10 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 ## UI Adaptativa / Modo Tablet (Memoria de Proyecto)
 - **Pendiente para el Futuro:** Implementar diseño adaptativo para tablets y pantallas grandes en Compose Multiplatform (layout de dos paneles / *Two-Pane* / *List-Detail*). Permitirá aprovechar pantallas de mayor tamaño mostrando simultáneamente la lista de fuentes/artículos y el detalle o visor del feed.
 
+---
+
+## Splash Screen y Navegación Inicial (Memoria de Proyecto)
+- **Motivo y Necesidad:** Al arrancar la aplicación, el estado de sesión de Supabase Auth se inicializa de forma asíncrona desde el almacenamiento (`AuthState.Initializing`), y paralelamente se debe evaluar si el usuario ya eligió previamente utilizar la app en Modo Invitado (`isGuestMode`). Si se renderizara la interfaz inmediatamente sin aguardar dicha inicialización, ocurriría un parpadeo visual (*flicker*), mostrando fugazmente la pantalla de autenticación antes de redirigir a `FeedsScreen`.
+- **Pendiente para el Futuro:** Implementar una pantalla o estado de Splash Screen que retenga el arranque hasta que se resuelva la inicialización de `AuthState` y la preferencia de Modo Invitado, redirigiendo de forma suave y definitiva a `FeedsScreen` (si está autenticado o en modo invitado) o a `AuthScreen` (si es un usuario nuevo por primera vez).
+
 
