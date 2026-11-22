@@ -42,6 +42,9 @@ dependencies:
   # Ksoup (XML Parser)
   - $libs.ksoup
 
+  # Logging
+  - $libs.touchlab.kermit
+
 dependencies@jvm:
   - $libs.ktor.client.cio
 
