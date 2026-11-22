@@ -14,6 +14,9 @@ dependencies:
   - $libs.androidx.lifecycle.runtime.compose
   - $libs.androidx.navigation.compose
 
+  # Date / Time
+  - $libs.kotlinx.datetime
+
   # Koin DI
   - $libs.koin.core
   - $libs.koin.compose
