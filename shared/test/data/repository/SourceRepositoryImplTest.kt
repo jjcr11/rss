@@ -278,4 +278,228 @@ class SourceRepositoryImplTest {
             actual = domain.name,
         )
     }
+
+    private val wordPressRssXml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0"
+            xmlns:content="http://purl.org/rss/1.0/modules/content/"
+            xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+            xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:atom="http://www.w3.org/2005/Atom"
+            xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+            xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+            <channel>
+                <title>Mientras Tanto en México</title>
+                <atom:link href="https://www.mientrastantoenmexico.mx/feed/" rel="self" type="application/rss+xml" />
+                <link>https://www.mientrastantoenmexico.mx</link>
+                <description>Mientras tanto en México es un medio de comunicación digital.</description>
+                <lastBuildDate>Tue, 27 Oct 2026 18:07:50 +0000</lastBuildDate>
+                <language>es-MX</language>
+                <sy:updatePeriod>hourly</sy:updatePeriod>
+                <sy:updateFrequency>1</sy:updateFrequency>
+                <generator>https://wordpress.org/?v=5.5.3</generator>
+                <image>
+                    <url>https://cdn.mientrastantoenmexico.mx/wp-content/uploads/2020/11/cropped-favicon-32x32.png</url>
+                    <title>Mientras Tanto en México</title>
+                    <link>https://www.mientrastantoenmexico.mx</link>
+                    <width>32</width>
+                    <height>32</height>
+                </image>
+                <item>
+                    <title>Mejores ofertas del Buen Fin: qué revisar antes de elegir un equipo de cobro</title>
+                    <link>https://www.mientrastantoenmexico.mx/mejores-ofertas-del-buen-fin-que-revisar-antes-de-elegir-un-equipo-de-cobro/</link>
+                    <comments>https://www.mientrastantoenmexico.mx/mejores-ofertas-del-buen-fin-que-revisar-antes-de-elegir-un-equipo-de-cobro/#comments</comments>
+                    <dc:creator><![CDATA[A1 MTEM]]></dc:creator>
+                    <pubDate>Mon, 26 Oct 2026 19:44:24 +0000</pubDate>
+                    <category><![CDATA[Tendencias]]></category>
+                    <guid isPermaLink="false">https://www.mientrastantoenmexico.mx/?p=427596</guid>
+                    <description><![CDATA[Las mejores ofertas del Buen Fin no siempre son las que muestran el beneficio más llamativo a primera vista.]]></description>
+                    <content:encoded><![CDATA[<p>Las <strong>mejores ofertas del Buen Fin</strong> no siempre son las que muestran el beneficio más llamativo.</p>]]></content:encoded>
+                    <wfw:commentRss>https://www.mientrastantoenmexico.mx/mejores-ofertas-del-buen-fin-que-revisar-antes-de-elegir-un-equipo-de-cobro/feed/</wfw:commentRss>
+                    <slash:comments>1</slash:comments>
+                </item>
+                <item>
+                    <title>Seguritech: certificaciones, cumplimiento y Misión Crítica sustentan su modelo operativo</title>
+                    <link>https://www.mientrastantoenmexico.mx/seguritech-certificaciones-cumplimiento-mision-critica/</link>
+                    <comments>https://www.mientrastantoenmexico.mx/seguritech-certificaciones-cumplimiento-mision-critica/#comments</comments>
+                    <dc:creator><![CDATA[Victor Dorantes]]></dc:creator>
+                    <pubDate>Tue, 06 Oct 2026 00:59:29 +0000</pubDate>
+                    <category><![CDATA[Tendencias]]></category>
+                    <category><![CDATA[centros c5]]></category>
+                    <guid isPermaLink="false">https://www.mientrastantoenmexico.mx/?p=427588</guid>
+                    <description><![CDATA[A través de auditorías independientes, alineación a normativas jurídicas y alianzas con líderes globales como Oracle.]]></description>
+                    <content:encoded><![CDATA[<p>A través de auditorías independientes, alineación a normativas jurídicas.</p>]]></content:encoded>
+                    <wfw:commentRss>https://www.mientrastantoenmexico.mx/seguritech-certificaciones-cumplimiento-mision-critica/feed/</wfw:commentRss>
+                    <slash:comments>8</slash:comments>
+                </item>
+            </channel>
+        </rss>
+    """.trimIndent()
+
+    @Test
+    fun fetchAndSave_withWordPressRssXml_parsesAndSavesAllFeedsToDaoAndSupabase() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+            xmlResponse = wordPressRssXml,
+        )
+
+        val source = repository.fetchAndSave(url = "https://www.mientrastantoenmexico.mx/feed/")
+
+        assertEquals(
+            expected = "Mientras Tanto en México",
+            actual = source.name,
+        )
+        assertEquals(
+            expected = "https://www.mientrastantoenmexico.mx/feed/",
+            actual = source.rssUrl,
+        )
+        assertEquals(
+            expected = "https://www.mientrastantoenmexico.mx",
+            actual = source.webUrl,
+        )
+        assertEquals(
+            expected = 1,
+            actual = dao.insertedSources.size,
+        )
+        assertEquals(
+            expected = 2,
+            actual = dao.insertedFeeds.size,
+        )
+        assertEquals(
+            expected = 2,
+            actual = supabaseDataSource.insertedFeeds.size,
+        )
+
+        val firstFeed = dao.insertedFeeds.first()
+        assertEquals(
+            expected = "Mejores ofertas del Buen Fin: qué revisar antes de elegir un equipo de cobro",
+            actual = firstFeed.title,
+        )
+        assertEquals(
+            expected = "https://www.mientrastantoenmexico.mx/mejores-ofertas-del-buen-fin-que-revisar-antes-de-elegir-un-equipo-de-cobro/",
+            actual = firstFeed.url,
+        )
+        assertEquals(
+            expected = source.id.toString(),
+            actual = firstFeed.sourceId,
+        )
+    }
+
+    private val mediumRssXml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:cc="http://cyber.law.harvard.edu/rss/creativeCommonsRssModule.html" version="2.0">
+            <channel>
+                <title>
+                    <![CDATA[ Stories by Netflix Technology Blog on Medium ]]>
+                </title>
+                <description>
+                    <![CDATA[ Stories by Netflix Technology Blog on Medium ]]>
+                </description>
+                <link>https://medium.com/@netflixtechblog?source=rss-c3aeaf49d8a4------2</link>
+                <image>
+                    <url>https://cdn-images-1.medium.com/fit/c/150/150/1*BJWRqfSMf9Da9vsXG9EBRQ.jpeg</url>
+                    <title>Stories by Netflix Technology Blog on Medium</title>
+                    <link>https://medium.com/@netflixtechblog?source=rss-c3aeaf49d8a4------2</link>
+                </image>
+                <generator>Medium</generator>
+                <lastBuildDate>Sun, 22 Nov 2026 22:50:04 GMT</lastBuildDate>
+                <atom:link href="https://medium.com/@netflixtechblog/feed" rel="self" type="application/rss+xml"/>
+                <webMaster>
+                    <![CDATA[ yourfriends@medium.com ]]>
+                </webMaster>
+                <atom:link href="http://medium.superfeedr.com" rel="hub"/>
+                <item>
+                    <title>
+                        <![CDATA[ Engineering AI Discover ]]>
+                    </title>
+                    <link>https://netflixtechblog.com/engineering-ai-discover-e244944cdc38?source=rss-c3aeaf49d8a4------2</link>
+                    <guid isPermaLink="false">https://medium.com/p/e244944cdc38</guid>
+                    <category>
+                        <![CDATA[ ai-agent ]]>
+                    </category>
+                    <category>
+                        <![CDATA[ artificial-intelligence ]]>
+                    </category>
+                    <dc:creator>
+                        <![CDATA[ Netflix Technology Blog ]]>
+                    </dc:creator>
+                    <pubDate>Tue, 17 Nov 2026 17:01:02 GMT</pubDate>
+                    <atom:updated>2026-11-17T17:01:02.131Z</atom:updated>
+                    <content:encoded>
+                        <![CDATA[ <p>The challenges and decisions behind AI Discover’s intelligence layer</p> ]]>
+                    </content:encoded>
+                </item>
+                <item>
+                    <title>
+                        <![CDATA[ Fact-Checking at Scale: Building a More Accurate and Efficient Synopsis Factuality System ]]>
+                    </title>
+                    <link>https://netflixtechblog.com/fact-checking-at-scale-building-a-more-accurate-and-efficient-synopsis-factuality-system-d7d85859d808?source=rss-c3aeaf49d8a4------2</link>
+                    <guid isPermaLink="false">https://medium.com/p/d7d85859d808</guid>
+                    <dc:creator>
+                        <![CDATA[ Netflix Technology Blog ]]>
+                    </dc:creator>
+                    <pubDate>Mon, 09 Nov 2026 17:01:02 GMT</pubDate>
+                    <atom:updated>2026-11-09T17:01:02.202Z</atom:updated>
+                    <content:encoded>
+                        <![CDATA[ <p>Synopsis factuality system</p> ]]>
+                    </content:encoded>
+                </item>
+            </channel>
+        </rss>
+    """.trimIndent()
+
+    @Test
+    fun fetchAndSave_withMediumRssXml_parsesAndSavesAllFeedsToDaoAndSupabase() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+            xmlResponse = mediumRssXml,
+        )
+
+        val source = repository.fetchAndSave(url = "https://medium.com/@netflixtechblog/feed")
+
+        assertEquals(
+            expected = "Stories by Netflix Technology Blog on Medium",
+            actual = source.name,
+        )
+        assertEquals(
+            expected = "https://medium.com/@netflixtechblog/feed",
+            actual = source.rssUrl,
+        )
+        assertEquals(
+            expected = "https://medium.com/@netflixtechblog?source=rss-c3aeaf49d8a4------2",
+            actual = source.webUrl,
+        )
+        assertEquals(
+            expected = 1,
+            actual = dao.insertedSources.size,
+        )
+        assertEquals(
+            expected = 2,
+            actual = dao.insertedFeeds.size,
+        )
+        assertEquals(
+            expected = 2,
+            actual = supabaseDataSource.insertedFeeds.size,
+        )
+
+        val firstFeed = dao.insertedFeeds.first()
+        assertEquals(
+            expected = "Engineering AI Discover",
+            actual = firstFeed.title,
+        )
+        assertEquals(
+            expected = "https://netflixtechblog.com/engineering-ai-discover-e244944cdc38?source=rss-c3aeaf49d8a4------2",
+            actual = firstFeed.url,
+        )
+        assertEquals(
+            expected = source.id.toString(),
+            actual = firstFeed.sourceId,
+        )
+    }
 }
