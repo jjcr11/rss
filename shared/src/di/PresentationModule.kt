@@ -3,6 +3,7 @@ package com.jjcr11.rss.di
 import com.jjcr11.rss.presentation.addsourcescreen.AddSourceViewModel
 import com.jjcr11.rss.presentation.authscreen.AuthViewModel
 import com.jjcr11.rss.presentation.feedsscreen.FeedsViewModel
+import com.jjcr11.rss.presentation.navigation.NavigationViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -24,6 +25,11 @@ val presentationModule = module {
     viewModel {
         AuthViewModel(
             signUpUseCase = get(),
+        )
+    }
+    viewModel {
+        NavigationViewModel(
+            observeAuthStateUseCase = get(),
         )
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,10 +46,20 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AuthRoute(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = koinViewModel(),
+    onAuthSuccess: () -> Unit = {},
     onGoogleSignUpClick: () -> Unit = {},
     onContinueWithoutAccountClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(
+        key1 = uiState.isSuccess,
+        block = {
+            if (uiState.isSuccess) {
+                onAuthSuccess()
+            }
+        },
+    )
 
     AuthScreen(
         modifier = modifier,
