@@ -1,0 +1,4 @@
+# Supabase Configuration
+# Replace with your project credentials from Supabase Console -> Project Settings -> Data API
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key

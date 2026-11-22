@@ -1,0 +1,10 @@
+tasks:
+  generate:
+    action: !com.jjcr11.rss.buildconfig.generateBuildConfig
+      propertiesFile: ${module.rootDir}/../local.properties
+      generatedSourceDir: ${module.rootDir}/src/generated
+
+generated:
+  sources:
+    - language: kotlin
+      directory: ${tasks.generate.action.generatedSourceDir}

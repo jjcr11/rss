@@ -9,7 +9,11 @@ captures
 !**/module.xcodeproj/xcshareddata/
 !**/module.xcodeproj/project.xcworkspace/
 **/xcshareddata/WorkspaceSettings.xcsettings
-xcuserdata
+userdata
+
+# Local secrets & properties
+local.properties
+shared/src/generated/
 
 # Local agent & environment configs
 .gemini/
