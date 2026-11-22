@@ -5,6 +5,7 @@ data class FeedXmlDto(
     val link: String,
     val pubDate: String? = null,
     val description: String? = null,
+    val content: String = "",
     val guid: String? = null,
     val isPermaLink: Boolean = false,
     val author: String? = null,

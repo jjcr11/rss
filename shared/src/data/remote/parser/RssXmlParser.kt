@@ -46,6 +46,12 @@ class RssXmlParser {
         val link = item.selectFirst("link")?.text().orEmpty()
         val pubDate = item.selectFirst("pubDate")?.text()
         val description = item.selectFirst("description")?.text()
+        val encodedContent = item.selectFirst("content|encoded, encoded, content")?.text()?.trim()
+        val content = if (!encodedContent.isNullOrBlank()) {
+            encodedContent
+        } else {
+            description.orEmpty()
+        }
 
         val guidElement = item.selectFirst("guid")
         val guid = guidElement?.text()
@@ -66,6 +72,7 @@ class RssXmlParser {
             link = link,
             pubDate = pubDate,
             description = description,
+            content = content,
             guid = guid,
             isPermaLink = isPermaLink,
             author = author,

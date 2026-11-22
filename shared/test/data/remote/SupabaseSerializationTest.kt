@@ -71,10 +71,35 @@ class SupabaseSerializationTest {
         assertEquals(expected = "feed-uuid-1", actual = feed.id)
         assertEquals(expected = "e5c89a02-234b-4892-98e1-95c55be027a1", actual = feed.sourceId)
         assertEquals(expected = "Show HN: My New Project", actual = feed.title)
+        assertEquals(expected = "", actual = feed.content)
         assertFalse(actual = feed.read)
         assertFalse(actual = feed.save)
         assertEquals(expected = "https://news.ycombinator.com/item?id=123", actual = feed.url)
         assertEquals(expected = 1700000000000L, actual = feed.date)
+    }
+
+    @Test
+    fun decodePostgrestFeedsResponse_withContent_parsesContentCorrectly() {
+        val rawJson = """
+            [
+                {
+                    "id": "feed-uuid-2",
+                    "source_id": "e5c89a02-234b-4892-98e1-95c55be027a1",
+                    "title": "Article Title",
+                    "content": "<p>Full content</p>",
+                    "read": true,
+                    "save": false,
+                    "url": "https://example.com/article",
+                    "date": 1700000000000,
+                    "created_at": 1700000000000,
+                    "updated_at": 1700000000000
+                }
+            ]
+        """.trimIndent()
+
+        val feeds = json.decodeFromString<List<FeedDto>>(string = rawJson)
+        val (feed) = feeds
+        assertEquals(expected = "<p>Full content</p>", actual = feed.content)
     }
 
     @Test

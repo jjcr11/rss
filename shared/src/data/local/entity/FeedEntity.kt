@@ -26,6 +26,8 @@ data class FeedEntity(
     val sourceId: String,
     @ColumnInfo(name = "title")
     val title: String,
+    @ColumnInfo(name = "content", defaultValue = "''")
+    val content: String = "",
     @ColumnInfo(name = "read")
     val read: Boolean,
     @ColumnInfo(name = "save")

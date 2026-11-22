@@ -66,6 +66,7 @@ class RssDatabaseTest {
             id = "feed-1",
             sourceId = "src-2",
             title = "Article 1",
+            content = "Content 1",
             read = false,
             save = false,
             url = "https://example.com/article1",
@@ -87,6 +88,7 @@ class RssDatabaseTest {
         assertEquals(expected = "feed-1", actual = feeds.first().id)
         assertEquals(expected = "src-2", actual = feeds.first().sourceId)
         assertEquals(expected = "Article 1", actual = feeds.first().title)
+        assertEquals(expected = "Content 1", actual = feeds.first().content)
     }
 
     @Test
@@ -132,6 +134,7 @@ class RssDatabaseTest {
             id = "feed-a",
             sourceId = "src-feed-test",
             title = "Article A",
+            content = "Body A",
             read = false,
             save = false,
             url = "https://example.com/a",
@@ -143,6 +146,7 @@ class RssDatabaseTest {
             id = "feed-b",
             sourceId = "src-feed-test",
             title = "Article B",
+            content = "Body B",
             read = true,
             save = true,
             url = "https://example.com/b",
@@ -156,6 +160,8 @@ class RssDatabaseTest {
         val feeds = feedDao.getAll().first()
         assertEquals(expected = 2, actual = feeds.size)
         assertEquals(expected = "feed-b", actual = feeds[0].id)
+        assertEquals(expected = "Body B", actual = feeds[0].content)
         assertEquals(expected = "feed-a", actual = feeds[1].id)
+        assertEquals(expected = "Body A", actual = feeds[1].content)
     }
 }

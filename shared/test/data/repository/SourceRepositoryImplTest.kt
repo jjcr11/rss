@@ -164,6 +164,14 @@ class SourceRepositoryImplTest {
             expected = "Item 1",
             actual = supabaseDataSource.insertedFeeds.first().title,
         )
+        assertEquals(
+            expected = "Item 1 Description",
+            actual = dao.insertedFeeds.first().content,
+        )
+        assertEquals(
+            expected = "Item 1 Description",
+            actual = supabaseDataSource.insertedFeeds.first().content,
+        )
     }
 
     @Test
@@ -383,6 +391,10 @@ class SourceRepositoryImplTest {
             actual = firstFeed.url,
         )
         assertEquals(
+            expected = "<p>Las <strong>mejores ofertas del Buen Fin</strong> no siempre son las que muestran el beneficio más llamativo.</p>",
+            actual = firstFeed.content,
+        )
+        assertEquals(
             expected = source.id.toString(),
             actual = firstFeed.sourceId,
         )
@@ -496,6 +508,10 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = "https://netflixtechblog.com/engineering-ai-discover-e244944cdc38?source=rss-c3aeaf49d8a4------2",
             actual = firstFeed.url,
+        )
+        assertEquals(
+            expected = "<p>The challenges and decisions behind AI Discover’s intelligence layer</p>",
+            actual = firstFeed.content,
         )
         assertEquals(
             expected = source.id.toString(),

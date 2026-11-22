@@ -7,6 +7,7 @@ data class Feed(
     val id: Uuid,
     val sourceId: Uuid,
     val title: String,
+    val content: String = "",
     val read: Boolean,
     val save: Boolean,
     val url: String,

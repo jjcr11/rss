@@ -56,6 +56,7 @@ class FeedRepositoryImplTest {
             id = id.toString(),
             sourceId = sourceId.toString(),
             title = "Sample News",
+            content = "Sample content",
             read = false,
             save = false,
             url = "https://example.com/news",
@@ -85,6 +86,10 @@ class FeedRepositoryImplTest {
             actual = domain.title,
         )
         assertEquals(
+            expected = "Sample content",
+            actual = domain.content,
+        )
+        assertEquals(
             expected = "https://example.com/news",
             actual = domain.url,
         )
@@ -106,6 +111,7 @@ class FeedRepositoryImplTest {
             id = id.toString(),
             sourceId = sourceId.toString(),
             title = "Supabase Feed",
+            content = "Supabase Content",
             read = false,
             save = false,
             url = "https://example.com/supabase-feed",
@@ -133,6 +139,10 @@ class FeedRepositoryImplTest {
         assertEquals(
             expected = "Supabase Feed",
             actual = inserted.title,
+        )
+        assertEquals(
+            expected = "Supabase Content",
+            actual = inserted.content,
         )
     }
 }

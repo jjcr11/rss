@@ -97,6 +97,10 @@ class RssXmlParserTest {
             actual = feed.description,
         )
         assertEquals(
+            expected = "Exploring the latest in KMP development.",
+            actual = feed.content,
+        )
+        assertEquals(
             expected = "https://example.com/?p=101",
             actual = feed.guid,
         )
@@ -120,6 +124,37 @@ class RssXmlParserTest {
         assertEquals(
             expected = "https://example.com/images/kmp.jpg",
             actual = feed.imageUrl,
+        )
+    }
+
+    @Test
+    fun parse_whenContentEncodedPresent_extractsContentEncodedAsContent() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+                <channel>
+                    <title>Tech Blog</title>
+                    <link>https://example.com/</link>
+                    <item>
+                        <title>Post Title</title>
+                        <link>https://example.com/post-1</link>
+                        <description><![CDATA[Summary teaser]]></description>
+                        <content:encoded><![CDATA[<p>Full article body</p>]]></content:encoded>
+                    </item>
+                </channel>
+            </rss>
+        """.trimIndent()
+
+        val source = parser.parse(xml = xml)
+        val feed = source.feeds.first()
+
+        assertEquals(
+            expected = "Summary teaser",
+            actual = feed.description,
+        )
+        assertEquals(
+            expected = "<p>Full article body</p>",
+            actual = feed.content,
         )
     }
 }

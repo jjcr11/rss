@@ -15,6 +15,7 @@ class FeedDtoMapperTest {
             id = "123e4567-e89b-12d3-a456-426614174000",
             sourceId = "223e4567-e89b-12d3-a456-426614174000",
             title = "Test Feed",
+            content = "<p>Full content</p>",
             read = true,
             save = false,
             url = "https://example.com/feed-1",
@@ -36,6 +37,10 @@ class FeedDtoMapperTest {
         assertEquals(
             expected = "Test Feed",
             actual = domain.title,
+        )
+        assertEquals(
+            expected = "<p>Full content</p>",
+            actual = domain.content,
         )
         assertEquals(
             expected = true,
@@ -69,6 +74,7 @@ class FeedDtoMapperTest {
             id = Uuid.parse("123e4567-e89b-12d3-a456-426614174000"),
             sourceId = Uuid.parse("223e4567-e89b-12d3-a456-426614174000"),
             title = "Test Feed",
+            content = "<p>Full content</p>",
             read = true,
             save = false,
             url = "https://example.com/feed-1",
@@ -90,6 +96,10 @@ class FeedDtoMapperTest {
         assertEquals(
             expected = "Test Feed",
             actual = dto.title,
+        )
+        assertEquals(
+            expected = "<p>Full content</p>",
+            actual = dto.content,
         )
         assertEquals(
             expected = true,

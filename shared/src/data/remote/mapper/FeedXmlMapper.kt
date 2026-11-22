@@ -18,6 +18,7 @@ fun FeedXmlDto.toDomain(
     id = id,
     sourceId = sourceId,
     title = this.title,
+    content = this.content.ifBlank { this.description.orEmpty() },
     read = false,
     save = false,
     url = this.link,

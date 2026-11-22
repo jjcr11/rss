@@ -11,6 +11,8 @@ data class FeedDto(
     val sourceId: String,
     @SerialName("title")
     val title: String,
+    @SerialName("content")
+    val content: String = "",
     @SerialName("read")
     val read: Boolean,
     @SerialName("save")
