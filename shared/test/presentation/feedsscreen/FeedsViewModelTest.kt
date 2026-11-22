@@ -37,10 +37,6 @@ class FeedsViewModelTest {
     private class FakeSourceRepository : SourceRepository {
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
 
-        override suspend fun insert(source: Source) {
-            throw NotImplementedError()
-        }
-
         override suspend fun fetchAndSave(url: String): Source {
             throw NotImplementedError()
         }

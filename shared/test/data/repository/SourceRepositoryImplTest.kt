@@ -4,8 +4,11 @@ import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
+import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
+import com.jjcr11.rss.data.remote.dto.SourceDto
 import com.jjcr11.rss.data.remote.parser.RssXmlParser
-import com.jjcr11.rss.domain.model.Source
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -39,8 +42,24 @@ class SourceRepositoryImplTest {
         override fun getAll(): Flow<List<SourceEntity>> = sourcesFlow
     }
 
+    private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(
+        supabaseClient = createSupabaseClient(
+            supabaseUrl = "https://example.supabase.co",
+            supabaseKey = "anon",
+        ) {
+            install(plugin = Postgrest)
+        },
+    ) {
+        val insertedSources = mutableListOf<SourceDto>()
+
+        override suspend fun insertSources(sources: List<SourceDto>) {
+            insertedSources.addAll(elements = sources)
+        }
+    }
+
     private fun createRepository(
         dao: FakeSourceDao,
+        supabaseDataSource: FakeSupabaseRemoteDataSource = FakeSupabaseRemoteDataSource(),
         xmlResponse: String = "",
     ): SourceRepositoryImpl {
         val mockEngine = MockEngine {
@@ -60,59 +79,12 @@ class SourceRepositoryImplTest {
         return SourceRepositoryImpl(
             sourceDao = dao,
             rssRemoteDataSource = remoteDataSource,
+            supabaseRemoteDataSource = supabaseDataSource,
         )
     }
 
     @Test
-    fun insert_mapsToEntityAndCallsDao() = runTest {
-        val dao = FakeSourceDao()
-        val repository = createRepository(dao = dao)
-        val id = Uuid.random()
-        val now = Clock.System.now()
-        val source = Source(
-            id = id,
-            rssUrl = "https://example.com/feed.xml",
-            webUrl = "https://example.com",
-            name = "Test Feed",
-            createdAt = now,
-            updatedAt = now,
-        )
-
-        repository.insert(source = source)
-
-        assertEquals(
-            expected = 1,
-            actual = dao.insertedSources.size,
-        )
-        val entity = dao.insertedSources.first()
-        assertEquals(
-            expected = id.toString(),
-            actual = entity.id,
-        )
-        assertEquals(
-            expected = "https://example.com/feed.xml",
-            actual = entity.rssUrl,
-        )
-        assertEquals(
-            expected = "https://example.com",
-            actual = entity.webUrl,
-        )
-        assertEquals(
-            expected = "Test Feed",
-            actual = entity.name,
-        )
-        assertEquals(
-            expected = now.toEpochMilliseconds(),
-            actual = entity.createdAt,
-        )
-        assertEquals(
-            expected = now.toEpochMilliseconds(),
-            actual = entity.updatedAt,
-        )
-    }
-
-    @Test
-    fun fetchAndSave_fetchesRssAndInsertsSourceWithFeeds() = runTest {
+    fun fetchAndSave_fetchesRssAndInsertsSourceWithFeedsAndSavesToSupabase() = runTest {
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <rss version="2.0">
@@ -128,7 +100,12 @@ class SourceRepositoryImplTest {
         """.trimIndent()
 
         val dao = FakeSourceDao()
-        val repository = createRepository(dao = dao, xmlResponse = xml)
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+            xmlResponse = xml,
+        )
 
         val source = repository.fetchAndSave(url = "https://example.com/feed.xml")
 
@@ -155,6 +132,14 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = source.id.toString(),
             actual = dao.insertedFeeds.first().sourceId,
+        )
+        assertEquals(
+            expected = 1,
+            actual = supabaseDataSource.insertedSources.size,
+        )
+        assertEquals(
+            expected = source.id.toString(),
+            actual = supabaseDataSource.insertedSources.first().id,
         )
     }
 

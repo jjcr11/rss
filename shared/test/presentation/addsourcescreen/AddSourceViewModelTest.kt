@@ -35,10 +35,6 @@ class AddSourceViewModelTest {
         val savedSources = mutableListOf<Source>()
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
 
-        override suspend fun insert(source: Source) {
-            throw NotImplementedError()
-        }
-
         override suspend fun fetchAndSave(url: String): Source {
             lastFetchedUrl = url
             shouldThrow?.let { throw it }

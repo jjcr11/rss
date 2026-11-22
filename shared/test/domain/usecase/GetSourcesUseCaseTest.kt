@@ -16,10 +16,6 @@ class GetSourcesUseCaseTest {
     private class FakeSourceRepository : SourceRepository {
         var sourcesFlow: Flow<List<Source>> = flowOf(emptyList())
 
-        override suspend fun insert(source: Source) {
-            throw NotImplementedError()
-        }
-
         override suspend fun fetchAndSave(url: String): Source {
             throw NotImplementedError()
         }

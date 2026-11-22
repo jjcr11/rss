@@ -16,10 +16,6 @@ class AddSourceUseCaseTest {
         var lastFetchedUrl: String? = null
         var sourceToReturn: Source? = null
 
-        override suspend fun insert(source: Source) {
-            throw NotImplementedError()
-        }
-
         override suspend fun fetchAndSave(url: String): Source {
             lastFetchedUrl = url
             return sourceToReturn ?: throw IllegalStateException("sourceToReturn not set")

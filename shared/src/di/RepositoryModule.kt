@@ -11,6 +11,7 @@ val repositoryModule = module {
         SourceRepositoryImpl(
             sourceDao = get(),
             rssRemoteDataSource = get(),
+            supabaseRemoteDataSource = get(),
         )
     }
     single<FeedRepository> {
