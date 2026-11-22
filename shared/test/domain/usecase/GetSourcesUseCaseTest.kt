@@ -24,6 +24,10 @@ class GetSourcesUseCaseTest {
             throw NotImplementedError()
         }
 
+        override suspend fun listenToRealtimeSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 
@@ -35,7 +39,7 @@ class GetSourcesUseCaseTest {
             id = Uuid.random(),
             rssUrl = "https://example.com/rss",
             webUrl = "https://example.com",
-            name = "Example RSS",
+            name = "Example Source",
             createdAt = Clock.System.now(),
             updatedAt = Clock.System.now(),
         )

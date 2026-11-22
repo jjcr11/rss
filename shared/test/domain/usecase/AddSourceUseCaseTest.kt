@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -25,6 +26,10 @@ class AddSourceUseCaseTest {
             throw NotImplementedError()
         }
 
+        override suspend fun listenToRealtimeSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = flowOf(emptyList())
     }
 
@@ -36,7 +41,7 @@ class AddSourceUseCaseTest {
             id = Uuid.random(),
             rssUrl = "https://example.com/rss",
             webUrl = "https://example.com",
-            name = "Example RSS",
+            name = "Example Source",
             createdAt = Clock.System.now(),
             updatedAt = Clock.System.now(),
         )
@@ -48,7 +53,7 @@ class AddSourceUseCaseTest {
             expected = "https://example.com/rss",
             actual = repository.lastFetchedUrl,
         )
-        assertEquals(
+        assertSame(
             expected = expectedSource,
             actual = result,
         )

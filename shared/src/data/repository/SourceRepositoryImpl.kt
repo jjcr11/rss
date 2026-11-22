@@ -42,4 +42,10 @@ class SourceRepositoryImpl(
         val sourcesEntity = sources.map { it.toDomain().toEntity() }
         sourceDao.insert(sourcesEntity)
     }
+
+    override suspend fun listenToRealtimeSources() {
+        supabaseRemoteDataSource.observeSources().collect { source ->
+            sourceDao.insert(source.toDomain().toEntity())
+        }
+    }
 }

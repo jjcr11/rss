@@ -16,15 +16,20 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SourceRepositoryImplTest {
 
     private class FakeSourceDao : SourceDao {
@@ -58,6 +63,7 @@ class SourceRepositoryImplTest {
         val insertedSources = mutableListOf<SourceDto>()
         val insertedFeeds = mutableListOf<FeedDto>()
         var sourcesToReturn: List<SourceDto> = emptyList()
+        val sourcesFlow = MutableSharedFlow<SourceDto>(replay = 1)
 
         override suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
             insertedSources.add(element = source)
@@ -65,6 +71,8 @@ class SourceRepositoryImplTest {
         }
 
         override suspend fun getSources(): List<SourceDto> = sourcesToReturn
+
+        override fun observeSources(): Flow<SourceDto> = sourcesFlow
     }
 
     private fun createRepository(
@@ -76,56 +84,61 @@ class SourceRepositoryImplTest {
             respond(
                 content = xmlResponse,
                 status = HttpStatusCode.OK,
-                headers = headersOf(
-                    name = HttpHeaders.ContentType,
-                    value = "application/rss+xml; charset=utf-8",
-                ),
+                headers = headersOf(HttpHeaders.ContentType, "application/xml"),
             )
         }
-        val remoteDataSource = RssRemoteDataSource(
-            httpClient = HttpClient(engine = mockEngine),
+        val httpClient = HttpClient(engine = mockEngine)
+        val rssDataSource = RssRemoteDataSource(
+            httpClient = httpClient,
             rssXmlParser = RssXmlParser(),
         )
         return SourceRepositoryImpl(
             sourceDao = dao,
-            rssRemoteDataSource = remoteDataSource,
+            rssRemoteDataSource = rssDataSource,
             supabaseRemoteDataSource = supabaseDataSource,
         )
     }
 
-    @Test
-    fun fetchAndSave_fetchesRssAndInsertsSourceWithFeedsAndSavesToSupabase() = runTest {
-        val xml = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <rss version="2.0">
-                <channel>
-                    <title>Kotaku</title>
-                    <link>https://example.com</link>
-                    <item>
-                        <title>Sample Article</title>
-                        <link>https://example.com/sample</link>
-                    </item>
-                </channel>
-            </rss>
-        """.trimIndent()
+    private val sampleRssXml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+            <channel>
+                <title>Test Feed Title</title>
+                <link>https://example.com</link>
+                <description>Test Description</description>
+                <item>
+                    <title>Item 1</title>
+                    <link>https://example.com/item1</link>
+                    <description>Item 1 Description</description>
+                    <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
+                </item>
+            </channel>
+        </rss>
+    """.trimIndent()
 
+    @Test
+    fun fetchAndSave_fetchesXmlSavesToDaoAndReplicatesToSupabase() = runTest {
         val dao = FakeSourceDao()
         val supabaseDataSource = FakeSupabaseRemoteDataSource()
         val repository = createRepository(
             dao = dao,
             supabaseDataSource = supabaseDataSource,
-            xmlResponse = xml,
+            xmlResponse = sampleRssXml,
         )
 
         val source = repository.fetchAndSave(url = "https://example.com/feed.xml")
 
         assertEquals(
-            expected = "Kotaku",
+            expected = "Test Feed Title",
             actual = source.name,
         )
         assertEquals(
             expected = "https://example.com/feed.xml",
             actual = source.rssUrl,
+        )
+        assertEquals(
+            expected = "https://example.com",
+            actual = source.webUrl,
         )
         assertEquals(
             expected = 1,
@@ -136,32 +149,20 @@ class SourceRepositoryImplTest {
             actual = dao.insertedFeeds.size,
         )
         assertEquals(
-            expected = "Sample Article",
-            actual = dao.insertedFeeds.first().title,
-        )
-        assertEquals(
-            expected = source.id.toString(),
-            actual = dao.insertedFeeds.first().sourceId,
-        )
-        assertEquals(
             expected = 1,
             actual = supabaseDataSource.insertedSources.size,
-        )
-        assertEquals(
-            expected = source.id.toString(),
-            actual = supabaseDataSource.insertedSources.first().id,
         )
         assertEquals(
             expected = 1,
             actual = supabaseDataSource.insertedFeeds.size,
         )
         assertEquals(
-            expected = "Sample Article",
-            actual = supabaseDataSource.insertedFeeds.first().title,
+            expected = "Test Feed Title",
+            actual = supabaseDataSource.insertedSources.first().name,
         )
         assertEquals(
-            expected = source.id.toString(),
-            actual = supabaseDataSource.insertedFeeds.first().sourceId,
+            expected = "Item 1",
+            actual = supabaseDataSource.insertedFeeds.first().title,
         )
     }
 
@@ -199,6 +200,42 @@ class SourceRepositoryImplTest {
             expected = remoteDto.name,
             actual = entity.name,
         )
+    }
+
+    @Test
+    fun listenToRealtimeSources_collectsFromSupabaseAndInsertsIntoDao() = runTest(context = UnconfinedTestDispatcher()) {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val now = Clock.System.now()
+        val remoteDto = SourceDto(
+            id = Uuid.random().toString(),
+            rssUrl = "https://example.com/feed.xml",
+            webUrl = "https://example.com",
+            name = "Realtime Feed",
+            createdAt = now.toEpochMilliseconds(),
+            updatedAt = now.toEpochMilliseconds(),
+        )
+
+        val job = backgroundScope.launch {
+            repository.listenToRealtimeSources()
+        }
+
+        supabaseDataSource.sourcesFlow.emit(value = remoteDto)
+
+        assertEquals(
+            expected = 1,
+            actual = dao.insertedSources.size,
+        )
+        val entity = dao.insertedSources.first()
+        assertEquals(
+            expected = remoteDto.id,
+            actual = entity.id,
+        )
+        job.cancel()
     }
 
     @Test

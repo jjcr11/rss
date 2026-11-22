@@ -9,4 +9,6 @@ interface SourceRepository {
     fun getAll(): Flow<List<Source>>
 
     suspend fun syncSources()
+
+    suspend fun listenToRealtimeSources()
 }

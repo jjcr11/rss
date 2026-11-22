@@ -4,6 +4,12 @@ import com.jjcr11.rss.data.remote.dto.FeedDto
 import com.jjcr11.rss.data.remote.dto.SourceDto
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.decodeRecord
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 open class SupabaseRemoteDataSource(
     private val supabaseClient: SupabaseClient,
@@ -19,6 +25,22 @@ open class SupabaseRemoteDataSource(
         supabaseClient.from(table = SOURCES_TABLE)
             .select()
             .decodeList()
+
+    open fun observeSources(): Flow<SourceDto> =
+        flow {
+            val channel = supabaseClient.channel(channelId = "source-channel")
+            val actionFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+                table = SOURCES_TABLE
+            }
+            channel.subscribe()
+            try {
+                actionFlow.collect { action ->
+                    emit(action.decodeRecord<SourceDto>())
+                }
+            } finally {
+                channel.unsubscribe()
+            }
+        }
 
     private companion object {
         const val SOURCES_TABLE = "sources"
