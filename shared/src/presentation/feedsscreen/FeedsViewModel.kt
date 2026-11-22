@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,13 +15,25 @@ import kotlinx.coroutines.launch
 class FeedsViewModel(
     private val getFeedsUseCase: GetFeedsUseCase,
     private val getSourcesUseCase: GetSourcesUseCase,
+    private val syncSourcesUseCase: SyncSourcesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = FeedsUiState(isLoading = true))
     val uiState: StateFlow<FeedsUiState> = _uiState.asStateFlow()
 
     init {
+        syncSources()
         observeFeeds()
+    }
+
+    private fun syncSources() {
+        viewModelScope.launch {
+            try {
+                syncSourcesUseCase()
+            } catch (e: Exception) {
+                println("Sync sources failed (offline mode): ${e.message}")
+            }
+        }
     }
 
     private fun observeFeeds() {

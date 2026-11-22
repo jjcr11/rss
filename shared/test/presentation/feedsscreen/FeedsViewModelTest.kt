@@ -6,6 +6,7 @@ import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -36,9 +37,14 @@ class FeedsViewModelTest {
 
     private class FakeSourceRepository : SourceRepository {
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
+        var syncSourcesCalled = false
 
         override suspend fun fetchAndSave(url: String): Source {
             throw NotImplementedError()
+        }
+
+        override suspend fun syncSources() {
+            syncSourcesCalled = true
         }
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
@@ -48,6 +54,7 @@ class FeedsViewModelTest {
     private lateinit var sourceRepository: FakeSourceRepository
     private lateinit var getFeedsUseCase: GetFeedsUseCase
     private lateinit var getSourcesUseCase: GetSourcesUseCase
+    private lateinit var syncSourcesUseCase: SyncSourcesUseCase
     private lateinit var viewModel: FeedsViewModel
 
     @BeforeTest
@@ -57,9 +64,11 @@ class FeedsViewModelTest {
         sourceRepository = FakeSourceRepository()
         getFeedsUseCase = GetFeedsUseCase(repository = feedRepository)
         getSourcesUseCase = GetSourcesUseCase(repository = sourceRepository)
+        syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository)
         viewModel = FeedsViewModel(
             getFeedsUseCase = getFeedsUseCase,
             getSourcesUseCase = getSourcesUseCase,
+            syncSourcesUseCase = syncSourcesUseCase,
         )
     }
 
@@ -144,6 +153,14 @@ class FeedsViewModelTest {
         assertEquals(
             expected = "",
             actual = feeds[0].sourceName,
+        )
+    }
+
+    @Test
+    fun init_triggersSyncSources() = runTest {
+        assertEquals(
+            expected = true,
+            actual = sourceRepository.syncSourcesCalled,
         )
     }
 }

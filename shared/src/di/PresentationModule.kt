@@ -16,6 +16,7 @@ val presentationModule = module {
         FeedsViewModel(
             getFeedsUseCase = get(),
             getSourcesUseCase = get(),
+            syncSourcesUseCase = get(),
         )
     }
 }
