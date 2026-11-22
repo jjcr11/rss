@@ -2,6 +2,7 @@ package com.jjcr11.rss.di
 
 import com.jjcr11.rss.BuildConfig
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
+import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
 import com.jjcr11.rss.data.remote.parser.RssXmlParser
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
@@ -25,5 +26,10 @@ val networkModule = module {
         ) {
             install(plugin = Postgrest)
         }
+    }
+    single {
+        SupabaseRemoteDataSource(
+            supabaseClient = get(),
+        )
     }
 }
