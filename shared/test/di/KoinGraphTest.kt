@@ -21,6 +21,7 @@ import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import com.jjcr11.rss.presentation.addsourcescreen.AddSourceViewModel
 import com.jjcr11.rss.presentation.authscreen.AuthViewModel
 import com.jjcr11.rss.presentation.feedsscreen.FeedsViewModel
+import com.jjcr11.rss.presentation.navigation.NavigationViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.SessionManager
 import io.github.jan.supabase.auth.auth
@@ -121,5 +122,6 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<AddSourceViewModel>())
         assertNotNull(actual = koin.get<FeedsViewModel>())
         assertNotNull(actual = koin.get<AuthViewModel>())
+        assertNotNull(actual = koin.get<NavigationViewModel>())
     }
 }
