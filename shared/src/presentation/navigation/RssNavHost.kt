@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jjcr11.rss.presentation.addsourcescreen.AddSourceRoute
-import com.jjcr11.rss.presentation.feedsscreen.FeedsScreen
+import com.jjcr11.rss.presentation.feedsscreen.FeedsRoute
 
 @Composable
 fun RssNavHost(
@@ -20,9 +20,11 @@ fun RssNavHost(
         modifier = modifier,
     ) {
         composable(route = Screen.Feeds.route) {
-            FeedsScreen {
-                navController.navigate(route = Screen.AddSource.route)
-            }
+            FeedsRoute(
+                onAddFeedClick = {
+                    navController.navigate(route = Screen.AddSource.route)
+                },
+            )
         }
         composable(route = Screen.AddSource.route) {
             AddSourceRoute()
