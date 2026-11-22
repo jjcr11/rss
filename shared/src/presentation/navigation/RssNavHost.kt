@@ -81,7 +81,11 @@ fun RssNavHost(
                 )
             }
             composable(route = Screen.AddSource.route) {
-                AddSourceRoute()
+                AddSourceRoute(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                )
             }
         }
     }

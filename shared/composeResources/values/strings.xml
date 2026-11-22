@@ -10,4 +10,6 @@
     <string name="sign_in_or_sign_up_button">SIGN IN / SIGN UP</string>
     <string name="sign_up_with_google_button">CONTINUE WITH GOOGLE</string>
     <string name="continue_without_account_button">Continue without account</string>
+    <string name="add_source_title">Add Source</string>
+    <string name="navigate_back">Back</string>
 </resources>

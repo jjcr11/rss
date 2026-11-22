@@ -197,3 +197,30 @@ val RssFeedIcon: ImageVector
             close()
         }
     }.build().also { rssFeedIconCache = it }
+
+private var arrowBackIconCache: ImageVector? = null
+
+val ArrowBackIcon: ImageVector
+    get() = arrowBackIconCache ?: ImageVector.Builder(
+        name = "ArrowBack",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+        autoMirror = true,
+    ).apply {
+        path(fill = SolidColor(value = Color.Black)) {
+            moveTo(x = 20f, y = 11f)
+            horizontalLineTo(x = 7.83f)
+            lineTo(x = 13.42f, y = 5.41f)
+            lineTo(x = 12f, y = 4f)
+            lineTo(x = 4f, y = 12f)
+            lineTo(x = 12f, y = 20f)
+            lineTo(x = 13.41f, y = 18.59f)
+            lineTo(x = 7.83f, y = 13f)
+            horizontalLineTo(x = 20f)
+            verticalLineTo(y = 11f)
+            close()
+        }
+    }.build().also { arrowBackIconCache = it }
+

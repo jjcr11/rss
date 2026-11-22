@@ -17,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jjcr11.rss.presentation.components.AddIcon
+import com.jjcr11.rss.presentation.components.ArrowBackIcon
 import com.jjcr11.rss.presentation.components.CloseIcon
 import com.jjcr11.rss.presentation.components.RssButton
 import com.jjcr11.rss.presentation.components.RssFeedIcon
@@ -34,7 +36,9 @@ import com.jjcr11.rss.presentation.components.RssTextField
 import com.jjcr11.rss.presentation.theme.RssTheme
 import com.jjcr11.rss.resources.Res
 import com.jjcr11.rss.resources.add_feed_button
+import com.jjcr11.rss.resources.add_source_title
 import com.jjcr11.rss.resources.clear_input
+import com.jjcr11.rss.resources.navigate_back
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -42,6 +46,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AddSourceRoute(
     modifier: Modifier = Modifier,
     viewModel: AddSourceViewModel = koinViewModel(),
+    onBackClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -51,6 +56,7 @@ fun AddSourceRoute(
         onAddFeedClick = { url ->
             viewModel.onEvent(event = AddSourceUiEvent.AddFeed(url = url))
         },
+        onBackClick = onBackClick,
     )
 }
 
@@ -60,11 +66,27 @@ fun AddSourceScreen(
     uiState: AddSourceUiState = AddSourceUiState(),
     onAddFeedClick: (String) -> Unit = {},
     onDeleteSourceClick: (SourceUiModel) -> Unit = {},
+    onBackClick: () -> Unit = {},
 ) {
     var url by remember { mutableStateOf(value = "") }
 
     Scaffold(
         modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = stringResource(resource = Res.string.add_source_title))
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = ArrowBackIcon,
+                            contentDescription = stringResource(resource = Res.string.navigate_back),
+                        )
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
