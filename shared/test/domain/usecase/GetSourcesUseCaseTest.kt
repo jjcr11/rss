@@ -20,6 +20,10 @@ class GetSourcesUseCaseTest {
             throw NotImplementedError()
         }
 
+        override suspend fun syncSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 

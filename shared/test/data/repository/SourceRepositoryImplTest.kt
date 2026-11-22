@@ -36,6 +36,10 @@ class SourceRepositoryImplTest {
             insertedSources.add(element = source)
         }
 
+        override suspend fun insert(sources: List<SourceEntity>) {
+            insertedSources.addAll(elements = sources)
+        }
+
         override suspend fun insertFeeds(feeds: List<FeedEntity>) {
             insertedFeeds.addAll(elements = feeds)
         }
@@ -53,11 +57,14 @@ class SourceRepositoryImplTest {
     ) {
         val insertedSources = mutableListOf<SourceDto>()
         val insertedFeeds = mutableListOf<FeedDto>()
+        var sourcesToReturn: List<SourceDto> = emptyList()
 
         override suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
             insertedSources.add(element = source)
             insertedFeeds.addAll(elements = feeds)
         }
+
+        override suspend fun getSources(): List<SourceDto> = sourcesToReturn
     }
 
     private fun createRepository(
@@ -155,6 +162,42 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = source.id.toString(),
             actual = supabaseDataSource.insertedFeeds.first().sourceId,
+        )
+    }
+
+    @Test
+    fun syncSources_fetchesFromSupabaseAndInsertsIntoDao() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val now = Clock.System.now()
+        val remoteDto = SourceDto(
+            id = Uuid.random().toString(),
+            rssUrl = "https://example.com/feed.xml",
+            webUrl = "https://example.com",
+            name = "Remote Feed",
+            createdAt = now.toEpochMilliseconds(),
+            updatedAt = now.toEpochMilliseconds(),
+        )
+        supabaseDataSource.sourcesToReturn = listOf(remoteDto)
+
+        repository.syncSources()
+
+        assertEquals(
+            expected = 1,
+            actual = dao.insertedSources.size,
+        )
+        val entity = dao.insertedSources.first()
+        assertEquals(
+            expected = remoteDto.id,
+            actual = entity.id,
+        )
+        assertEquals(
+            expected = remoteDto.name,
+            actual = entity.name,
         )
     }
 

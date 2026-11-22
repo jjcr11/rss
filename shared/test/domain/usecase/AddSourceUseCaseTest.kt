@@ -21,6 +21,10 @@ class AddSourceUseCaseTest {
             return sourceToReturn ?: throw IllegalStateException("sourceToReturn not set")
         }
 
+        override suspend fun syncSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = flowOf(emptyList())
     }
 

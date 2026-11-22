@@ -44,6 +44,10 @@ class AddSourceViewModelTest {
             return source
         }
 
+        override suspend fun syncSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 

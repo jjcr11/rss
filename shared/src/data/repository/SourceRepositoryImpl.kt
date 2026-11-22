@@ -36,4 +36,10 @@ class SourceRepositoryImpl(
     override fun getAll(): Flow<List<Source>> = sourceDao.getAll().map { entities ->
         entities.map { it.toDomain() }
     }
+
+    override suspend fun syncSources() {
+        val sources = supabaseRemoteDataSource.getSources()
+        val sourcesEntity = sources.map { it.toDomain().toEntity() }
+        sourceDao.insert(sourcesEntity)
+    }
 }

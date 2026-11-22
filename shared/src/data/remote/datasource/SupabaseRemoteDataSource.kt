@@ -15,6 +15,11 @@ open class SupabaseRemoteDataSource(
         }
     }
 
+    open suspend fun getSources(): List<SourceDto> =
+        supabaseClient.from(table = SOURCES_TABLE)
+            .select()
+            .decodeList()
+
     private companion object {
         const val SOURCES_TABLE = "sources"
         const val FEEDS_TABLE = "feeds"

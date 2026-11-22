@@ -7,4 +7,6 @@ interface SourceRepository {
     suspend fun fetchAndSave(url: String): Source
 
     fun getAll(): Flow<List<Source>>
+
+    suspend fun syncSources()
 }

@@ -14,6 +14,9 @@ interface SourceDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(source: SourceEntity)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(sources: List<SourceEntity>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFeeds(feeds: List<FeedEntity>)
 
