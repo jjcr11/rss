@@ -12,10 +12,12 @@ import com.jjcr11.rss.domain.repository.AuthRepository
 import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
+import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import com.jjcr11.rss.presentation.addsourcescreen.AddSourceViewModel
@@ -116,6 +118,8 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<SyncSourcesUseCase>())
         assertNotNull(actual = koin.get<ListenToRealtimeSourcesUseCase>())
         assertNotNull(actual = koin.get<SignUpUseCase>())
+        assertNotNull(actual = koin.get<SignInUseCase>())
+        assertNotNull(actual = koin.get<AuthenticateWithEmailUseCase>())
         assertNotNull(actual = koin.get<ObserveAuthStateUseCase>())
 
         // ViewModels

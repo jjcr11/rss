@@ -2,7 +2,7 @@ package com.jjcr11.rss.presentation.authscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jjcr11.rss.domain.usecase.SignUpUseCase
+import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val signUpUseCase: SignUpUseCase,
+    private val authenticateWithEmailUseCase: AuthenticateWithEmailUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = AuthUiState())
@@ -18,7 +18,7 @@ class AuthViewModel(
 
     fun onEvent(event: AuthUiEvent) {
         when (event) {
-            is AuthUiEvent.SignUpWithEmail -> signUpWithEmail(
+            is AuthUiEvent.AuthenticateWithEmail -> authenticateWithEmail(
                 email = event.email,
                 password = event.password,
             )
@@ -26,7 +26,7 @@ class AuthViewModel(
         }
     }
 
-    private fun signUpWithEmail(email: String, password: String) {
+    private fun authenticateWithEmail(email: String, password: String) {
         val trimmedEmail = email.trim()
         val trimmedPassword = password.trim()
         if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) return
@@ -39,7 +39,7 @@ class AuthViewModel(
                 )
             }
             try {
-                signUpUseCase(
+                authenticateWithEmailUseCase(
                     email = trimmedEmail,
                     password = trimmedPassword,
                 )

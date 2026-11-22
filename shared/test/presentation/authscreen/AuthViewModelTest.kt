@@ -2,7 +2,7 @@ package com.jjcr11.rss.presentation.authscreen
 
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.repository.AuthRepository
-import com.jjcr11.rss.domain.usecase.SignUpUseCase
+import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +33,14 @@ class AuthViewModelTest {
         override val authState: Flow<AuthState> = emptyFlow()
 
         override suspend fun signUpWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
+
+        override suspend fun signInWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
+
+        override suspend fun authenticateWithEmail(email: String, password: String) {
             lastEmail = email
             lastPassword = password
             shouldThrow?.let { throw it }
@@ -40,15 +48,15 @@ class AuthViewModelTest {
     }
 
     private lateinit var repository: FakeAuthRepository
-    private lateinit var signUpUseCase: SignUpUseCase
+    private lateinit var authenticateWithEmailUseCase: AuthenticateWithEmailUseCase
     private lateinit var viewModel: AuthViewModel
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         repository = FakeAuthRepository()
-        signUpUseCase = SignUpUseCase(repository = repository)
-        viewModel = AuthViewModel(signUpUseCase = signUpUseCase)
+        authenticateWithEmailUseCase = AuthenticateWithEmailUseCase(repository = repository)
+        viewModel = AuthViewModel(authenticateWithEmailUseCase = authenticateWithEmailUseCase)
     }
 
     @AfterTest
@@ -66,9 +74,9 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun onEvent_signUpWithEmail_whenBlank_doesNotCallUseCase() = runTest {
+    fun onEvent_authenticateWithEmail_whenBlank_doesNotCallUseCase() = runTest {
         viewModel.onEvent(
-            event = AuthUiEvent.SignUpWithEmail(
+            event = AuthUiEvent.AuthenticateWithEmail(
                 email = "   ",
                 password = "password",
             ),
@@ -79,7 +87,7 @@ class AuthViewModelTest {
         assertFalse(actual = viewModel.uiState.value.isLoading)
 
         viewModel.onEvent(
-            event = AuthUiEvent.SignUpWithEmail(
+            event = AuthUiEvent.AuthenticateWithEmail(
                 email = "user@test.com",
                 password = "   ",
             ),
@@ -90,28 +98,34 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun onEvent_signUpWithEmail_whenSuccessful_updatesStateToSuccess() = runTest {
+    fun onEvent_authenticateWithEmail_whenSuccessful_updatesStateToSuccess() = runTest {
         viewModel.onEvent(
-            event = AuthUiEvent.SignUpWithEmail(
+            event = AuthUiEvent.AuthenticateWithEmail(
                 email = "  test@example.com  ",
                 password = "  securePassword123  ",
             ),
         )
         advanceUntilIdle()
 
-        assertEquals(expected = "test@example.com", actual = repository.lastEmail)
-        assertEquals(expected = "securePassword123", actual = repository.lastPassword)
+        assertEquals(
+            expected = "test@example.com",
+            actual = repository.lastEmail,
+        )
+        assertEquals(
+            expected = "securePassword123",
+            actual = repository.lastPassword,
+        )
         assertFalse(actual = viewModel.uiState.value.isLoading)
         assertTrue(actual = viewModel.uiState.value.isSuccess)
         assertNull(actual = viewModel.uiState.value.errorMessage)
     }
 
     @Test
-    fun onEvent_signUpWithEmail_whenFails_setsErrorMessage() = runTest {
+    fun onEvent_authenticateWithEmail_whenFails_setsErrorMessage() = runTest {
         repository.shouldThrow = RuntimeException("Email already in use")
 
         viewModel.onEvent(
-            event = AuthUiEvent.SignUpWithEmail(
+            event = AuthUiEvent.AuthenticateWithEmail(
                 email = "user@example.com",
                 password = "password123",
             ),
@@ -120,21 +134,27 @@ class AuthViewModelTest {
 
         assertFalse(actual = viewModel.uiState.value.isLoading)
         assertFalse(actual = viewModel.uiState.value.isSuccess)
-        assertEquals(expected = "Email already in use", actual = viewModel.uiState.value.errorMessage)
+        assertEquals(
+            expected = "Email already in use",
+            actual = viewModel.uiState.value.errorMessage,
+        )
     }
 
     @Test
     fun onEvent_clearError_clearsErrorMessage() = runTest {
         repository.shouldThrow = RuntimeException("Some error")
         viewModel.onEvent(
-            event = AuthUiEvent.SignUpWithEmail(
+            event = AuthUiEvent.AuthenticateWithEmail(
                 email = "user@example.com",
                 password = "password123",
             ),
         )
         advanceUntilIdle()
 
-        assertEquals(expected = "Some error", actual = viewModel.uiState.value.errorMessage)
+        assertEquals(
+            expected = "Some error",
+            actual = viewModel.uiState.value.errorMessage,
+        )
 
         viewModel.onEvent(event = AuthUiEvent.ClearError)
 

@@ -7,6 +7,7 @@
     <string name="email_placeholder">Email</string>
     <string name="password_placeholder">Password</string>
     <string name="sign_up_button">CREATE ACCOUNT</string>
+    <string name="sign_in_or_sign_up_button">SIGN IN / SIGN UP</string>
     <string name="sign_up_with_google_button">CONTINUE WITH GOOGLE</string>
     <string name="continue_without_account_button">Continue without account</string>
 </resources>

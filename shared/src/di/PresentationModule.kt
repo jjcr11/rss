@@ -24,7 +24,7 @@ val presentationModule = module {
     }
     viewModel {
         AuthViewModel(
-            signUpUseCase = get(),
+            authenticateWithEmailUseCase = get(),
         )
     }
     viewModel {

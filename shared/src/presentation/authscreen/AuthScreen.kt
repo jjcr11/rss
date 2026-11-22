@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,8 +35,7 @@ import com.jjcr11.rss.resources.Res
 import com.jjcr11.rss.resources.continue_without_account_button
 import com.jjcr11.rss.resources.email_placeholder
 import com.jjcr11.rss.resources.password_placeholder
-import com.jjcr11.rss.resources.sign_up_button
-import com.jjcr11.rss.resources.sign_up_with_google_button
+import com.jjcr11.rss.resources.sign_in_or_sign_up_button
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -64,9 +61,9 @@ fun AuthRoute(
     AuthScreen(
         modifier = modifier,
         uiState = uiState,
-        onSignUpClick = { email, password ->
+        onSubmitClick = { email, password ->
             viewModel.onEvent(
-                event = AuthUiEvent.SignUpWithEmail(
+                event = AuthUiEvent.AuthenticateWithEmail(
                     email = email,
                     password = password,
                 ),
@@ -81,8 +78,8 @@ fun AuthRoute(
 fun AuthScreen(
     modifier: Modifier = Modifier,
     uiState: AuthUiState = AuthUiState(),
-    onSignUpClick: (email: String, password: String) -> Unit = { _, _ -> },
-    onGoogleSignUpClick: () -> Unit = {},
+    onSubmitClick: (email: String, password: String) -> Unit = { _, _ -> },
+    @Suppress("UNUSED_PARAMETER") onGoogleSignUpClick: () -> Unit = {},
     onContinueWithoutAccountClick: () -> Unit = {},
 ) {
     var email by remember { mutableStateOf(value = "") }
@@ -159,13 +156,15 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(height = 24.dp))
 
             RssButton(
-                text = stringResource(resource = Res.string.sign_up_button),
+                text = stringResource(resource = Res.string.sign_in_or_sign_up_button),
                 onClick = {
-                    onSignUpClick(email, password)
+                    onSubmitClick(email, password)
                 },
                 isLoading = uiState.isLoading,
             )
 
+            // TODO: Implement Google Sign-In with Supabase Auth
+            /*
             Spacer(modifier = Modifier.height(height = 16.dp))
 
             HorizontalDivider(
@@ -184,6 +183,7 @@ fun AuthScreen(
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 ),
             )
+            */
 
             Spacer(modifier = Modifier.height(height = 8.dp))
 
