@@ -47,6 +47,10 @@ class FeedsViewModelTest {
             syncSourcesCalled = true
         }
 
+        override suspend fun listenToRealtimeSources() {
+            throw NotImplementedError()
+        }
+
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 

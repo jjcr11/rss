@@ -10,6 +10,7 @@ val presentationModule = module {
         AddSourceViewModel(
             addSourceUseCase = get(),
             getSourcesUseCase = get(),
+            listenToRealtimeSourcesUseCase = get(),
         )
     }
     viewModel {

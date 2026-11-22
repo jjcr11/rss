@@ -4,6 +4,7 @@ import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,7 @@ class AddSourceViewModelTest {
         var shouldThrow: Exception? = null
         val savedSources = mutableListOf<Source>()
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
+        var listenToRealtimeSourcesCalled = false
 
         override suspend fun fetchAndSave(url: String): Source {
             lastFetchedUrl = url
@@ -48,12 +50,17 @@ class AddSourceViewModelTest {
             throw NotImplementedError()
         }
 
+        override suspend fun listenToRealtimeSources() {
+            listenToRealtimeSourcesCalled = true
+        }
+
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
 
     private lateinit var repository: FakeSourceRepository
     private lateinit var addSourceUseCase: AddSourceUseCase
     private lateinit var getSourcesUseCase: GetSourcesUseCase
+    private lateinit var listenToRealtimeSourcesUseCase: ListenToRealtimeSourcesUseCase
     private lateinit var viewModel: AddSourceViewModel
 
     @BeforeTest
@@ -62,9 +69,11 @@ class AddSourceViewModelTest {
         repository = FakeSourceRepository()
         addSourceUseCase = AddSourceUseCase(repository = repository)
         getSourcesUseCase = GetSourcesUseCase(repository = repository)
+        listenToRealtimeSourcesUseCase = ListenToRealtimeSourcesUseCase(repository = repository)
         viewModel = AddSourceViewModel(
             addSourceUseCase = addSourceUseCase,
             getSourcesUseCase = getSourcesUseCase,
+            listenToRealtimeSourcesUseCase = listenToRealtimeSourcesUseCase,
         )
     }
 
@@ -104,6 +113,12 @@ class AddSourceViewModelTest {
             expected = "Existing Source",
             actual = sources[0].name,
         )
+    }
+
+    @Test
+    fun init_triggersListenToRealtimeSources() = runTest(context = testDispatcher) {
+        advanceUntilIdle()
+        assertTrue(actual = repository.listenToRealtimeSourcesCalled)
     }
 
     @Test

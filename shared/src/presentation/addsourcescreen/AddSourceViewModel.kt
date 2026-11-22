@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,13 +14,25 @@ import kotlinx.coroutines.launch
 class AddSourceViewModel(
     private val addSourceUseCase: AddSourceUseCase,
     private val getSourcesUseCase: GetSourcesUseCase,
+    private val listenToRealtimeSourcesUseCase: ListenToRealtimeSourcesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = AddSourceUiState())
     val uiState: StateFlow<AddSourceUiState> = _uiState.asStateFlow()
 
     init {
+        listenToRealtimeSources()
         observeSources()
+    }
+
+    private fun listenToRealtimeSources() {
+        viewModelScope.launch {
+            try {
+                listenToRealtimeSourcesUseCase()
+            } catch (e: Exception) {
+                println("Realtime sources failed: ${e.message}")
+            }
+        }
     }
 
     private fun observeSources() {
