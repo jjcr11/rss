@@ -7,6 +7,7 @@ import com.jjcr11.rss.data.remote.parser.RssXmlParser
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.realtime.Realtime
 import io.ktor.client.HttpClient
 import org.koin.dsl.module
 
@@ -25,6 +26,7 @@ val networkModule = module {
             supabaseKey = BuildConfig.SUPABASE_KEY,
         ) {
             install(plugin = Postgrest)
+            install(plugin = Realtime)
         }
     }
     single {
