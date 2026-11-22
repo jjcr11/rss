@@ -7,11 +7,19 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.auth.user.UserSession
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.exceptions.RestException
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
@@ -26,13 +34,49 @@ class AuthRepositoryImplTest {
         val sessionStatusFlow = MutableSharedFlow<SessionStatus>(replay = 1)
         var lastEmail: String? = null
         var lastPassword: String? = null
+        var signInEmail: String? = null
+        var signInPassword: String? = null
+        var signInThrows: Exception? = null
+        var signUpThrows: Exception? = null
+        var signInCallCount = 0
+        var signUpCallCount = 0
 
         override val sessionStatus = sessionStatusFlow
 
         override suspend fun signUp(email: String, password: String) {
+            signUpCallCount++
             lastEmail = email
             lastPassword = password
+            signUpThrows?.let { throw it }
         }
+
+        override suspend fun signIn(email: String, password: String) {
+            signInCallCount++
+            signInEmail = email
+            signInPassword = password
+            signInThrows?.let { throw it }
+        }
+    }
+
+    private suspend fun createFakeRestException(
+        statusCode: HttpStatusCode,
+        error: String,
+        description: String?,
+    ): RestException {
+        val client = HttpClient(
+            engine = MockEngine {
+                respond(
+                    content = """{"error":"$error","error_description":"$description"}""",
+                    status = statusCode,
+                )
+            },
+        )
+        val response = client.get(urlString = "https://example.com")
+        return RestException(
+            error = error,
+            description = description,
+            response = response,
+        )
     }
 
     @Test
@@ -49,6 +93,155 @@ class AuthRepositoryImplTest {
         assertEquals(
             expected = "secretPassword",
             actual = dataSource.lastPassword,
+        )
+    }
+
+    @Test
+    fun signInWithEmail_delegatesToAuthRemoteDataSource() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        repository.signInWithEmail(email = "test@example.com", password = "secretPassword")
+
+        assertEquals(
+            expected = "test@example.com",
+            actual = dataSource.signInEmail,
+        )
+        assertEquals(
+            expected = "secretPassword",
+            actual = dataSource.signInPassword,
+        )
+    }
+
+    @Test
+    fun authenticateWithEmail_whenSignInSucceeds_doesNotCallSignUp() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        repository.authenticateWithEmail(email = "user@example.com", password = "password123")
+
+        assertEquals(
+            expected = 1,
+            actual = dataSource.signInCallCount,
+        )
+        assertEquals(
+            expected = 0,
+            actual = dataSource.signUpCallCount,
+        )
+        assertEquals(
+            expected = "user@example.com",
+            actual = dataSource.signInEmail,
+        )
+    }
+
+    @Test
+    fun authenticateWithEmail_whenSignInFailsWithInvalidCredentials_andSignUpSucceeds_completesSuccessfully() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        dataSource.signInThrows = createFakeRestException(
+            statusCode = HttpStatusCode.BadRequest,
+            error = "invalid_grant",
+            description = "Invalid login credentials",
+        )
+
+        repository.authenticateWithEmail(email = "newuser@example.com", password = "password123")
+
+        assertEquals(
+            expected = 1,
+            actual = dataSource.signInCallCount,
+        )
+        assertEquals(
+            expected = 1,
+            actual = dataSource.signUpCallCount,
+        )
+        assertEquals(
+            expected = "newuser@example.com",
+            actual = dataSource.lastEmail,
+        )
+    }
+
+    @Test
+    fun authenticateWithEmail_whenSignInFailsWithInvalidCredentials_andSignUpFailsWithUserAlreadyExists_throwsSignInException() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        val signInError = createFakeRestException(
+            statusCode = HttpStatusCode.BadRequest,
+            error = "invalid_grant",
+            description = "Invalid login credentials",
+        )
+        val signUpError = createFakeRestException(
+            statusCode = HttpStatusCode.UnprocessableEntity,
+            error = "user_already_exists",
+            description = "User already registered",
+        )
+
+        dataSource.signInThrows = signInError
+        dataSource.signUpThrows = signUpError
+
+        val thrown = assertFailsWith<RestException> {
+            repository.authenticateWithEmail(email = "existing@example.com", password = "wrongPassword")
+        }
+
+        assertSame(
+            expected = signInError,
+            actual = thrown,
+        )
+    }
+
+    @Test
+    fun authenticateWithEmail_whenSignInFailsWithInvalidCredentials_andSignUpFailsWithOtherError_throwsSignUpException() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        val signInError = createFakeRestException(
+            statusCode = HttpStatusCode.BadRequest,
+            error = "invalid_grant",
+            description = "Invalid login credentials",
+        )
+        val signUpError = createFakeRestException(
+            statusCode = HttpStatusCode.UnprocessableEntity,
+            error = "weak_password",
+            description = "Password should be at least 6 characters",
+        )
+
+        dataSource.signInThrows = signInError
+        dataSource.signUpThrows = signUpError
+
+        val thrown = assertFailsWith<RestException> {
+            repository.authenticateWithEmail(email = "newuser@example.com", password = "123")
+        }
+
+        assertSame(
+            expected = signUpError,
+            actual = thrown,
+        )
+    }
+
+    @Test
+    fun authenticateWithEmail_whenSignInFailsWithOtherError_throwsImmediatelyWithoutCallingSignUp() = runTest {
+        val dataSource = FakeAuthRemoteDataSource()
+        val repository = AuthRepositoryImpl(authRemoteDataSource = dataSource)
+
+        val networkError = RuntimeException("Connection failed")
+        dataSource.signInThrows = networkError
+
+        val thrown = assertFailsWith<RuntimeException> {
+            repository.authenticateWithEmail(email = "user@example.com", password = "password123")
+        }
+
+        assertSame(
+            expected = networkError,
+            actual = thrown,
+        )
+        assertEquals(
+            expected = 1,
+            actual = dataSource.signInCallCount,
+        )
+        assertEquals(
+            expected = 0,
+            actual = dataSource.signUpCallCount,
         )
     }
 

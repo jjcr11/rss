@@ -19,6 +19,14 @@ class ObserveAuthStateUseCaseTest {
         override suspend fun signUpWithEmail(email: String, password: String) {
             throw NotImplementedError()
         }
+
+        override suspend fun signInWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
+
+        override suspend fun authenticateWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
     }
 
     @Test

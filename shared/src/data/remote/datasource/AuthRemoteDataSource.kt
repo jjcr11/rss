@@ -18,4 +18,11 @@ open class AuthRemoteDataSource(
             this.password = password
         }
     }
+
+    open suspend fun signIn(email: String, password: String) {
+        supabaseClient.auth.signInWith(provider = Email) {
+            this.email = email
+            this.password = password
+        }
+    }
 }

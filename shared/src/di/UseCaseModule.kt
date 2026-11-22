@@ -1,10 +1,12 @@
 package com.jjcr11.rss.di
 
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
+import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import org.koin.dsl.module
@@ -37,6 +39,16 @@ val useCaseModule = module {
     }
     factory {
         SignUpUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        SignInUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        AuthenticateWithEmailUseCase(
             repository = get(),
         )
     }

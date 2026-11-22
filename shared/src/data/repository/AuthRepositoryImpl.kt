@@ -5,6 +5,7 @@ import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.model.User
 import com.jjcr11.rss.domain.repository.AuthRepository
 import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.uuid.Uuid
@@ -39,5 +40,55 @@ class AuthRepositoryImpl(
 
     override suspend fun signUpWithEmail(email: String, password: String) {
         authRemoteDataSource.signUp(email = email, password = password)
+    }
+
+    override suspend fun signInWithEmail(email: String, password: String) {
+        authRemoteDataSource.signIn(email = email, password = password)
+    }
+
+    override suspend fun authenticateWithEmail(email: String, password: String) {
+        try {
+            authRemoteDataSource.signIn(email = email, password = password)
+        } catch (signInException: Exception) {
+            if (isInvalidCredentialsError(e = signInException)) {
+                try {
+                    authRemoteDataSource.signUp(email = email, password = password)
+                } catch (signUpException: Exception) {
+                    if (isUserAlreadyExistsError(e = signUpException)) {
+                        throw signInException
+                    } else {
+                        throw signUpException
+                    }
+                }
+            } else {
+                throw signInException
+            }
+        }
+    }
+
+    private fun isInvalidCredentialsError(e: Exception): Boolean {
+        if (e !is RestException) {
+            return false
+        }
+        val isInvalidGrant = e.error.contains(other = "invalid_grant", ignoreCase = true)
+        val isInvalidCredentialsDesc = e.description?.contains(
+            other = "Invalid login credentials",
+            ignoreCase = true,
+        ) == true
+        val isInvalidCredentialsMsg = e.message?.contains(
+            other = "Invalid login credentials",
+            ignoreCase = true,
+        ) == true
+        return (e.statusCode == 400) || isInvalidGrant || isInvalidCredentialsDesc || isInvalidCredentialsMsg
+    }
+
+    private fun isUserAlreadyExistsError(e: Exception): Boolean {
+        if (e !is RestException) {
+            return false
+        }
+        val isUserAlreadyExists = e.error.contains(other = "user_already_exists", ignoreCase = true)
+        val isAlreadyDesc = e.description?.contains(other = "already registered", ignoreCase = true) == true
+        val isAlreadyMsg = e.message?.contains(other = "already registered", ignoreCase = true) == true
+        return isUserAlreadyExists || isAlreadyDesc || isAlreadyMsg
     }
 }

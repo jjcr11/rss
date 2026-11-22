@@ -20,6 +20,14 @@ class SignUpUseCaseTest {
             lastEmail = email
             lastPassword = password
         }
+
+        override suspend fun signInWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
+
+        override suspend fun authenticateWithEmail(email: String, password: String) {
+            throw NotImplementedError()
+        }
     }
 
     @Test
