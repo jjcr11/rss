@@ -20,11 +20,16 @@ class SourceRepositoryImpl(
     override suspend fun fetchAndSave(url: String): Source {
         val sourceXmlDto = rssRemoteDataSource.fetchRss(url = url)
         val sourceDomain = sourceXmlDto.toDomain(rssUrl = url)
-        val sourceEntity = sourceDomain.toEntity()
         val feedsDomain = sourceXmlDto.feeds.map { it.toDomain(sourceId = sourceDomain.id) }
+
+        val sourceEntity = sourceDomain.toEntity()
         val feedEntities = feedsDomain.map { it.toEntity() }
         sourceDao.insertWithFeeds(source = sourceEntity, feeds = feedEntities)
-        supabaseRemoteDataSource.insertSources(sources = listOf(sourceDomain.toDto()))
+
+        val sourceDto = sourceDomain.toDto()
+        val feedsDto = feedsDomain.map { it.toDto() }
+        supabaseRemoteDataSource.insertSourceWithFeeds(source = sourceDto, feeds = feedsDto)
+
         return sourceDomain
     }
 

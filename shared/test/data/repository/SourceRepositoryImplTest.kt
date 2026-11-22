@@ -5,6 +5,7 @@ import com.jjcr11.rss.data.local.entity.FeedEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
+import com.jjcr11.rss.data.remote.dto.FeedDto
 import com.jjcr11.rss.data.remote.dto.SourceDto
 import com.jjcr11.rss.data.remote.parser.RssXmlParser
 import io.github.jan.supabase.createSupabaseClient
@@ -51,9 +52,11 @@ class SourceRepositoryImplTest {
         },
     ) {
         val insertedSources = mutableListOf<SourceDto>()
+        val insertedFeeds = mutableListOf<FeedDto>()
 
-        override suspend fun insertSources(sources: List<SourceDto>) {
-            insertedSources.addAll(elements = sources)
+        override suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
+            insertedSources.add(element = source)
+            insertedFeeds.addAll(elements = feeds)
         }
     }
 
@@ -140,6 +143,18 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = source.id.toString(),
             actual = supabaseDataSource.insertedSources.first().id,
+        )
+        assertEquals(
+            expected = 1,
+            actual = supabaseDataSource.insertedFeeds.size,
+        )
+        assertEquals(
+            expected = "Sample Article",
+            actual = supabaseDataSource.insertedFeeds.first().title,
+        )
+        assertEquals(
+            expected = source.id.toString(),
+            actual = supabaseDataSource.insertedFeeds.first().sourceId,
         )
     }
 
