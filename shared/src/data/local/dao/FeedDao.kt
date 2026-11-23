@@ -29,4 +29,10 @@ interface FeedDao {
 
     @Query("SELECT url FROM feeds WHERE source_id = :sourceId")
     suspend fun getUrlsBySourceId(sourceId: String): List<String>
+
+    @Query("SELECT * FROM feeds WHERE source_id = :sourceId AND is_read = 1")
+    suspend fun getReadFeedsBySourceId(sourceId: String): List<FeedEntity>
+
+    @Query("DELETE FROM feeds WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<String>): Int
 }

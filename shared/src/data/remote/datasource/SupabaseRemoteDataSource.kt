@@ -109,6 +109,21 @@ open class SupabaseRemoteDataSource(
             }
     }
 
+    open suspend fun deleteFeeds(ids: List<String>) {
+        if (ids.isNotEmpty()) {
+            supabaseClient
+                .from(table = FEEDS_TABLE)
+                .delete {
+                    filter {
+                        isIn(
+                            column = "id",
+                            values = ids,
+                        )
+                    }
+                }
+        }
+    }
+
     open fun observeSources(): Flow<RealtimeSourceEvent> =
         flow {
             val channel = supabaseClient.channel(channelId = "source-channel")

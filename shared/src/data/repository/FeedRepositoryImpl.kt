@@ -69,6 +69,7 @@ class FeedRepositoryImpl(
                 val sourceXmlDto = rssDataSource.fetchRss(url = source.rssUrl)
                 val sourceId = Uuid.parse(uuidString = source.id)
                 val feedsDomain = sourceXmlDto.feeds.map { it.toDomain(sourceId = sourceId) }
+                val currentXmlUrls = feedsDomain.map { it.url }.toSet()
                 val existingUrls = feedDao.getUrlsBySourceId(sourceId = source.id).toSet()
                 val newFeeds = feedsDomain.filterNot { feed ->
                     feed.url in existingUrls
@@ -86,6 +87,22 @@ class FeedRepositoryImpl(
                     } catch (e: Exception) {
                         Logger.withTag(tag = TAG).w(throwable = e) {
                             "Failed to replicate new feeds to Supabase for source ${source.id}"
+                        }
+                    }
+                }
+
+                val readFeeds = feedDao.getReadFeedsBySourceId(sourceId = source.id)
+                val expiredFeeds = readFeeds.filterNot { it.url in currentXmlUrls }
+                if (expiredFeeds.isNotEmpty()) {
+                    val expiredIds = expiredFeeds.map { it.id }
+                    feedDao.deleteByIds(ids = expiredIds)
+                    try {
+                        supabaseRemoteDataSource.deleteFeeds(ids = expiredIds)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Logger.withTag(tag = TAG).w(throwable = e) {
+                            "Failed to delete expired feeds in Supabase for source ${source.id}"
                         }
                     }
                 }
