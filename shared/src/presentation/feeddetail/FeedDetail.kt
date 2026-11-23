@@ -28,11 +28,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
+import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.jjcr11.rss.presentation.components.ArrowBackIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
@@ -44,8 +52,12 @@ import org.jetbrains.compose.resources.stringResource
 sealed interface ArticleBlock {
     data class Text(
         val content: String,
+        val annotatedText: AnnotatedString? = null,
         val isHeading: Boolean = false,
-    ) : ArticleBlock
+    ) : ArticleBlock {
+        val text: AnnotatedString
+            get() = annotatedText ?: AnnotatedString(text = content)
+    }
 
     data class Image(
         val url: String,
@@ -157,7 +169,7 @@ fun FeedDetail(
                 when (block) {
                     is ArticleBlock.Text -> {
                         Text(
-                            text = block.content,
+                            text = block.text,
                             style = if (block.isHeading) {
                                 MaterialTheme.typography.titleMedium
                             } else {
@@ -274,9 +286,11 @@ internal fun parseHtmlToBlocks(html: String): List<ArticleBlock> {
                     val text = element.text().trim()
                     if (text.isNotBlank()) {
                         val isHeading = element.tagName().startsWith(prefix = "h")
+                        val annotatedText = parseElementToAnnotatedString(element = element)
                         blocks.add(
                             ArticleBlock.Text(
                                 content = text,
+                                annotatedText = annotatedText,
                                 isHeading = isHeading,
                             ),
                         )
@@ -294,6 +308,56 @@ internal fun parseHtmlToBlocks(html: String): List<ArticleBlock> {
         .map { it.trim() }
         .filter { it.isNotBlank() }
         .map { ArticleBlock.Text(content = it) }
+}
+
+internal fun parseElementToAnnotatedString(element: Element): AnnotatedString {
+    return buildAnnotatedString {
+        appendNode(node = element)
+    }
+}
+
+private fun AnnotatedString.Builder.appendNode(node: Node) {
+    when (node) {
+        is TextNode -> {
+            append(text = node.text())
+        }
+        is Element -> {
+            when (node.tagName()) {
+                "a" -> {
+                    val href = node.absUrl("href").ifBlank { node.attr("href") }.trim()
+                    if (href.isNotBlank()) {
+                        val linkStyle = TextLinkStyles(
+                            style = SpanStyle(
+                                textDecoration = TextDecoration.Underline,
+                            ),
+                        )
+                        withLink(
+                            link = LinkAnnotation.Url(
+                                url = href,
+                                styles = linkStyle,
+                            ),
+                        ) {
+                            node.childNodes().forEach { child ->
+                                appendNode(node = child)
+                            }
+                        }
+                    } else {
+                        node.childNodes().forEach { child ->
+                            appendNode(node = child)
+                        }
+                    }
+                }
+                "img" -> {
+                    // Images inside inline flow handled separately if extracted as blocks
+                }
+                else -> {
+                    node.childNodes().forEach { child ->
+                        appendNode(node = child)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

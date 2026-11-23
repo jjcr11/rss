@@ -1,5 +1,6 @@
 package com.jjcr11.rss.presentation.feeddetail
 
+import androidx.compose.ui.text.LinkAnnotation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -18,6 +19,27 @@ class FeedDetailTest {
         val second = assertIs<ArticleBlock.Text>(value = blocks[1])
         assertEquals(expected = "First paragraph with bold text.", actual = first.content)
         assertEquals(expected = "Second paragraph with link.", actual = second.content)
+    }
+
+    @Test
+    fun parseHtmlToBlocks_withAnchorTags_preservesLinkAnnotation() {
+        val html = "<p>Visit our <a href=\"https://example.com/guide\">guide</a> for more details.</p>"
+
+        val blocks = parseHtmlToBlocks(html = html)
+
+        assertEquals(expected = 1, actual = blocks.size)
+        val textBlock = assertIs<ArticleBlock.Text>(value = blocks[0])
+        assertEquals(expected = "Visit our guide for more details.", actual = textBlock.content)
+
+        val annotatedString = textBlock.text
+        val linkAnnotations = annotatedString.getLinkAnnotations(
+            start = 0,
+            end = annotatedString.length,
+        )
+        assertEquals(expected = 1, actual = linkAnnotations.size)
+        val urlAnnotation = linkAnnotations.first().item
+        val url = assertIs<LinkAnnotation.Url>(value = urlAnnotation)
+        assertEquals(expected = "https://example.com/guide", actual = url.url)
     }
 
     @Test
