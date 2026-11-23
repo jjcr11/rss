@@ -1,10 +1,14 @@
 package com.jjcr11.rss.di
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.jjcr11.rss.data.local.dao.FeedDao
 import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
 import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
+import com.jjcr11.rss.data.local.preferences.UserPreferencesDataSource
+import com.jjcr11.rss.data.local.preferences.createDataStore
 import com.jjcr11.rss.data.remote.datasource.AuthRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
@@ -12,6 +16,7 @@ import com.jjcr11.rss.data.remote.parser.RssXmlParser
 import com.jjcr11.rss.domain.manager.SyncManager
 import com.jjcr11.rss.domain.repository.AuthRepository
 import com.jjcr11.rss.domain.repository.FeedRepository
+import com.jjcr11.rss.domain.repository.PreferencesRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
@@ -21,7 +26,9 @@ import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.ObserveGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SetFeedAsReadUseCase
+import com.jjcr11.rss.domain.usecase.SetGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
 import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
@@ -48,6 +55,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class KoinGraphTest {
@@ -86,6 +94,19 @@ class KoinGraphTest {
         }
     }
 
+    private val testPreferencesModule = module {
+        single<DataStore<Preferences>> {
+            createDataStore(
+                producePath = { "/tmp/test_pref_${Uuid.random()}.preferences_pb" },
+            )
+        }
+        single {
+            UserPreferencesDataSource(
+                dataStore = get(),
+            )
+        }
+    }
+
     private lateinit var koinApp: org.koin.core.KoinApplication
 
     @BeforeTest
@@ -96,6 +117,7 @@ class KoinGraphTest {
                 listOf(
                     networkModule,
                     testDatabaseModule,
+                    testPreferencesModule,
                     repositoryModule,
                     useCaseModule,
                     presentationModule,
@@ -125,15 +147,18 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<SupabaseRemoteDataSource>())
         assertNotNull(actual = koin.get<AuthRemoteDataSource>())
 
-        // DAOs
+        // DAOs & Local Storage
         assertNotNull(actual = koin.get<SourceDao>())
         assertNotNull(actual = koin.get<FeedDao>())
+        assertNotNull(actual = koin.get<DataStore<Preferences>>())
+        assertNotNull(actual = koin.get<UserPreferencesDataSource>())
 
         // Repositories & Managers
         assertNotNull(actual = koin.get<SyncManager>())
         assertNotNull(actual = koin.get<SourceRepository>())
         assertNotNull(actual = koin.get<FeedRepository>())
         assertNotNull(actual = koin.get<AuthRepository>())
+        assertNotNull(actual = koin.get<PreferencesRepository>())
 
         // Use Cases
         assertNotNull(actual = koin.get<AddSourceUseCase>())
@@ -149,6 +174,8 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<SetFeedAsReadUseCase>())
         assertNotNull(actual = koin.get<AuthenticateWithEmailUseCase>())
         assertNotNull(actual = koin.get<ObserveAuthStateUseCase>())
+        assertNotNull(actual = koin.get<ObserveGuestModeUseCase>())
+        assertNotNull(actual = koin.get<SetGuestModeUseCase>())
 
         // ViewModels
         assertNotNull(actual = koin.get<AddSourceViewModel>())
