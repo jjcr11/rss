@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,17 +42,20 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.jjcr11.rss.presentation.components.ArrowBackIcon
+import com.jjcr11.rss.presentation.feedsscreen.FeedUiModel
 import com.jjcr11.rss.presentation.theme.RssTheme
 import com.jjcr11.rss.resources.Res
 import com.jjcr11.rss.resources.feed_detail_kicker
 import com.jjcr11.rss.resources.navigate_back
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 sealed interface ArticleBlock {
     data class Text(
@@ -67,36 +75,30 @@ sealed interface ArticleBlock {
 
 @Composable
 fun FeedDetailRoute(
-    title: String,
-    sourceName: String,
-    date: String,
-    content: String,
+    feedId: String,
     modifier: Modifier = Modifier,
+    viewModel: FeedDetailViewModel = koinViewModel(),
     onBackClick: () -> Unit = {},
 ) {
-    FeedDetail(
-        title = title,
-        sourceName = sourceName,
-        date = date,
-        content = content,
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(key1 = feedId) {
+        viewModel.setInitialFeedId(feedId = feedId)
+    }
+
+    FeedDetailScreen(
+        uiState = uiState,
         modifier = modifier,
         onBackClick = onBackClick,
     )
 }
 
 @Composable
-fun FeedDetail(
-    title: String,
-    sourceName: String,
-    date: String,
-    content: String,
+fun FeedDetailScreen(
+    uiState: FeedDetailUiState,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
 ) {
-    val blocks = remember(key1 = content) {
-        parseHtmlToBlocks(html = content)
-    }
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -116,105 +118,156 @@ fun FeedDetail(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues = innerPadding)
-                .verticalScroll(state = rememberScrollState())
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 24.dp,
-                ),
-        ) {
-            if (sourceName.isNotBlank() || date.isNotBlank()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(size = 6.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.secondary,
-                                shape = CircleShape,
-                            ),
-                    )
-                    val kicker = if (date.isNotBlank()) {
-                        stringResource(
-                            resource = Res.string.feed_detail_kicker,
-                            sourceName.uppercase(),
-                            date.uppercase(),
-                        )
-                    } else {
-                        sourceName.uppercase()
-                    }
-                    Text(
-                        text = kicker,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(modifier = Modifier.height(height = 8.dp))
+        if (uiState.isLoading && uiState.feeds.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues = innerPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(size = 48.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3.dp,
+                )
             }
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onSurface,
+        } else if (uiState.feeds.isNotEmpty()) {
+            val pagerState = rememberPagerState(
+                initialPage = uiState.initialIndex.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = (uiState.feeds.size - 1).coerceAtLeast(minimumValue = 0),
+                ),
+                pageCount = { uiState.feeds.size },
             )
 
-            Spacer(modifier = Modifier.height(height = 16.dp))
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues = innerPadding),
+                key = { page -> uiState.feeds[page].id },
+            ) { page ->
+                val feed = uiState.feeds[page]
+                FeedArticleContent(
+                    title = feed.title,
+                    sourceName = feed.sourceName,
+                    date = feed.date,
+                    content = feed.content,
+                )
+            }
+        }
+    }
+}
 
-            blocks.forEach { block ->
-                when (block) {
-                    is ArticleBlock.Text -> {
-                        Text(
-                            text = block.text,
-                            style = if (block.isHeading) {
-                                MaterialTheme.typography.titleMedium
-                            } else {
-                                MaterialTheme.typography.bodyMedium
-                            },
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    is ArticleBlock.Image -> {
-                        Column(
+@Composable
+fun FeedArticleContent(
+    title: String,
+    sourceName: String,
+    date: String,
+    content: String,
+    modifier: Modifier = Modifier,
+) {
+    val blocks = remember(key1 = content) {
+        parseHtmlToBlocks(html = content)
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(state = rememberScrollState())
+            .padding(
+                horizontal = 16.dp,
+                vertical = 24.dp,
+            ),
+    ) {
+        if (sourceName.isNotBlank() || date.isNotBlank()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(size = 6.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = CircleShape,
+                        ),
+                )
+                val kicker = if (date.isNotBlank()) {
+                    stringResource(
+                        resource = Res.string.feed_detail_kicker,
+                        sourceName.uppercase(),
+                        date.uppercase(),
+                    )
+                } else {
+                    sourceName.uppercase()
+                }
+                Text(
+                    text = kicker,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(modifier = Modifier.height(height = 8.dp))
+        }
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        Spacer(modifier = Modifier.height(height = 16.dp))
+
+        blocks.forEach { block ->
+            when (block) {
+                is ArticleBlock.Text -> {
+                    Text(
+                        text = block.text,
+                        style = if (block.isHeading) {
+                            MaterialTheme.typography.titleMedium
+                        } else {
+                            MaterialTheme.typography.bodyMedium
+                        },
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                is ArticleBlock.Image -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(shape = RoundedCornerShape(size = 4.dp))
+                            .background(color = MaterialTheme.colorScheme.surfaceContainer),
+                    ) {
+                        AsyncImage(
+                            model = block.url,
+                            contentDescription = block.caption,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(shape = RoundedCornerShape(size = 4.dp))
-                                .background(color = MaterialTheme.colorScheme.surfaceContainer),
-                        ) {
-                            AsyncImage(
-                                model = block.url,
-                                contentDescription = block.caption,
+                                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            contentScale = ContentScale.FillWidth,
+                        )
+                        if (!block.caption.isNullOrBlank()) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
-                                contentScale = ContentScale.FillWidth,
-                            )
-                            if (!block.caption.isNullOrBlank()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
-                                        .padding(
-                                            horizontal = 12.dp,
-                                            vertical = 8.dp,
-                                        ),
-                                ) {
-                                    Text(
-                                        text = block.caption,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
+                                    .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
+                                    .padding(
+                                        horizontal = 12.dp,
+                                        vertical = 8.dp,
+                                    ),
+                            ) {
+                                Text(
+                                    text = block.caption,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(height = 16.dp))
             }
+            Spacer(modifier = Modifier.height(height = 16.dp))
         }
     }
 }
@@ -364,11 +417,21 @@ private fun AnnotatedString.Builder.appendNode(node: Node) {
 @Preview
 fun FeedDetailPreview() {
     RssTheme {
-        FeedDetail(
-            title = "The Architecture of Scientific Revolutions: Computing in the Age of High Density",
-            sourceName = "Stripe Press",
-            date = "Oct 24, 2024",
-            content = "<p>The canonical model of compute distribution has long treated memory access as a localized hierarchy: L1 registers at sub-nanosecond scale, moving symmetrically outward to secondary cache, coherent NUMA nodes, and ultimately across network fabrics to cold block arrays.</p><figure><img src=\"https://example.com/schematic.png\" alt=\"Topological map\"/><figcaption>FIGURE 1.1: Distributed memory interconnect topology</figcaption></figure><p>Yet the emergence of optically bonded photonic interconnects has collapsed the traditional penalty curve.</p>",
+        FeedDetailScreen(
+            uiState = FeedDetailUiState(
+                feeds = listOf(
+                    FeedUiModel(
+                        id = "1",
+                        sourceName = "Stripe Press",
+                        title = "The Architecture of Scientific Revolutions: Computing in the Age of High Density",
+                        date = "Oct 24, 2024",
+                        url = "https://example.com/article",
+                        content = "<p>The canonical model of compute distribution has long treated memory access as a localized hierarchy: L1 registers at sub-nanosecond scale, moving symmetrically outward to secondary cache, coherent NUMA nodes, and ultimately across network fabrics to cold block arrays.</p><figure><img src=\"https://example.com/schematic.png\" alt=\"Topological map\"/><figcaption>FIGURE 1.1: Distributed memory interconnect topology</figcaption></figure><p>Yet the emergence of optically bonded photonic interconnects has collapsed the traditional penalty curve.</p>",
+                    ),
+                ),
+                initialIndex = 0,
+                isLoading = false,
+            ),
         )
     }
 }
@@ -379,11 +442,21 @@ fun FeedDetailDarkPreview() {
     RssTheme(
         darkTheme = true,
         content = {
-            FeedDetail(
-                title = "The Architecture of Scientific Revolutions: Computing in the Age of High Density",
-                sourceName = "Stripe Press",
-                date = "Oct 24, 2024",
-                content = "<p>The canonical model of compute distribution has long treated memory access as a localized hierarchy: L1 registers at sub-nanosecond scale, moving symmetrically outward to secondary cache, coherent NUMA nodes, and ultimately across network fabrics to cold block arrays.</p><figure><img src=\"https://example.com/schematic.png\" alt=\"Topological map\"/><figcaption>FIGURE 1.1: Distributed memory interconnect topology</figcaption></figure><p>Yet the emergence of optically bonded photonic interconnects has collapsed the traditional penalty curve.</p>",
+            FeedDetailScreen(
+                uiState = FeedDetailUiState(
+                    feeds = listOf(
+                        FeedUiModel(
+                            id = "1",
+                            sourceName = "Stripe Press",
+                            title = "The Architecture of Scientific Revolutions: Computing in the Age of High Density",
+                            date = "Oct 24, 2024",
+                            url = "https://example.com/article",
+                            content = "<p>The canonical model of compute distribution has long treated memory access as a localized hierarchy: L1 registers at sub-nanosecond scale, moving symmetrically outward to secondary cache, coherent NUMA nodes, and ultimately across network fabrics to cold block arrays.</p><figure><img src=\"https://example.com/schematic.png\" alt=\"Topological map\"/><figcaption>FIGURE 1.1: Distributed memory interconnect topology</figcaption></figure><p>Yet the emergence of optically bonded photonic interconnects has collapsed the traditional penalty curve.</p>",
+                        ),
+                    ),
+                    initialIndex = 0,
+                    isLoading = false,
+                ),
             )
         },
     )

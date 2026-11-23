@@ -81,20 +81,8 @@ fun RssNavHost(
                     },
                     onFeedClick = { feed ->
                         navController.currentBackStackEntry?.savedStateHandle?.set(
-                            key = "feed_title",
-                            value = feed.title,
-                        )
-                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                            key = "feed_source_name",
-                            value = feed.sourceName,
-                        )
-                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                            key = "feed_date",
-                            value = feed.date,
-                        )
-                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                            key = "feed_content",
-                            value = feed.content,
+                            key = "feed_id",
+                            value = feed.id,
                         )
                         navController.navigate(route = Screen.FeedDetail.route)
                     },
@@ -109,16 +97,10 @@ fun RssNavHost(
             }
             composable(route = Screen.FeedDetail.route) {
                 val prevBackStackEntry = navController.previousBackStackEntry
-                val title = prevBackStackEntry?.savedStateHandle?.get<String>(key = "feed_title").orEmpty()
-                val sourceName = prevBackStackEntry?.savedStateHandle?.get<String>(key = "feed_source_name").orEmpty()
-                val date = prevBackStackEntry?.savedStateHandle?.get<String>(key = "feed_date").orEmpty()
-                val content = prevBackStackEntry?.savedStateHandle?.get<String>(key = "feed_content").orEmpty()
+                val feedId = prevBackStackEntry?.savedStateHandle?.get<String>(key = "feed_id").orEmpty()
 
                 FeedDetailRoute(
-                    title = title,
-                    sourceName = sourceName,
-                    date = date,
-                    content = content,
+                    feedId = feedId,
                     onBackClick = {
                         navController.popBackStack()
                     },
