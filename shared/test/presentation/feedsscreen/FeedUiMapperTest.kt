@@ -17,6 +17,7 @@ class FeedUiMapperTest {
             id = id,
             sourceId = sourceId,
             title = "Test Title",
+            content = "<p>Test Content</p>",
             read = false,
             save = false,
             url = "https://example.com/item",
@@ -46,6 +47,10 @@ class FeedUiMapperTest {
         assertEquals(
             expected = "https://example.com/item",
             actual = uiModel.url,
+        )
+        assertEquals(
+            expected = "<p>Test Content</p>",
+            actual = uiModel.content,
         )
     }
 

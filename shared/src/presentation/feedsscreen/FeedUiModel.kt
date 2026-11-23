@@ -6,4 +6,5 @@ data class FeedUiModel(
     val title: String,
     val date: String,
     val url: String,
+    val content: String = "",
 )
