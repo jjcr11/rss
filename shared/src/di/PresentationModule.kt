@@ -20,8 +20,6 @@ val presentationModule = module {
         FeedsViewModel(
             getFeedsUseCase = get(),
             getSourcesUseCase = get(),
-            syncSourcesUseCase = get(),
-            syncFeedsUseCase = get(),
         )
     }
     viewModel {
@@ -39,6 +37,7 @@ val presentationModule = module {
     viewModel {
         NavigationViewModel(
             observeAuthStateUseCase = get(),
+            syncManager = get(),
         )
     }
 }

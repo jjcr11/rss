@@ -8,6 +8,7 @@ import com.jjcr11.rss.data.remote.datasource.AuthRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
 import com.jjcr11.rss.data.remote.parser.RssXmlParser
+import com.jjcr11.rss.domain.manager.SyncManager
 import com.jjcr11.rss.domain.repository.AuthRepository
 import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
@@ -111,7 +112,8 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<SourceDao>())
         assertNotNull(actual = koin.get<FeedDao>())
 
-        // Repositories
+        // Repositories & Managers
+        assertNotNull(actual = koin.get<SyncManager>())
         assertNotNull(actual = koin.get<SourceRepository>())
         assertNotNull(actual = koin.get<FeedRepository>())
         assertNotNull(actual = koin.get<AuthRepository>())

@@ -6,8 +6,6 @@ import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
-import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
-import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +15,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,36 +31,22 @@ class FeedsViewModelTest {
 
     private class FakeFeedRepository : FeedRepository {
         val feedsFlow = MutableStateFlow<List<Feed>>(value = emptyList())
-        var syncFeedsCalled = false
-        var syncFeedsShouldThrow: Exception? = null
 
         override fun getAll(): Flow<List<Feed>> = feedsFlow
 
-        override suspend fun syncFeeds() {
-            syncFeedsCalled = true
-            syncFeedsShouldThrow?.let { throw it }
-        }
+        override suspend fun syncFeeds() = Unit
 
         override suspend fun setAsRead(id: Uuid) = Unit
     }
 
     private class FakeSourceRepository : SourceRepository {
         val sourcesFlow = MutableStateFlow<List<Source>>(value = emptyList())
-        var syncSourcesCalled = false
-        var syncShouldThrow: Exception? = null
 
-        override suspend fun fetchAndSave(url: String): Source {
-            throw NotImplementedError()
-        }
+        override suspend fun fetchAndSave(url: String): Source = throw NotImplementedError()
 
-        override suspend fun syncSources() {
-            syncSourcesCalled = true
-            syncShouldThrow?.let { throw it }
-        }
+        override suspend fun syncSources() = Unit
 
-        override suspend fun listenToRealtimeSources() {
-            throw NotImplementedError()
-        }
+        override suspend fun listenToRealtimeSources() = Unit
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
     }
@@ -72,8 +55,6 @@ class FeedsViewModelTest {
     private lateinit var sourceRepository: FakeSourceRepository
     private lateinit var getFeedsUseCase: GetFeedsUseCase
     private lateinit var getSourcesUseCase: GetSourcesUseCase
-    private lateinit var syncSourcesUseCase: SyncSourcesUseCase
-    private lateinit var syncFeedsUseCase: SyncFeedsUseCase
     private lateinit var viewModel: FeedsViewModel
 
     @BeforeTest
@@ -83,13 +64,9 @@ class FeedsViewModelTest {
         sourceRepository = FakeSourceRepository()
         getFeedsUseCase = GetFeedsUseCase(repository = feedRepository)
         getSourcesUseCase = GetSourcesUseCase(repository = sourceRepository)
-        syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository)
-        syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository)
         viewModel = FeedsViewModel(
             getFeedsUseCase = getFeedsUseCase,
             getSourcesUseCase = getSourcesUseCase,
-            syncSourcesUseCase = syncSourcesUseCase,
-            syncFeedsUseCase = syncFeedsUseCase,
         )
     }
 
@@ -183,51 +160,5 @@ class FeedsViewModelTest {
             expected = "",
             actual = feeds[0].sourceName,
         )
-    }
-
-    @Test
-    fun init_triggersSyncSourcesAndSyncFeeds() = runTest {
-        assertEquals(
-            expected = true,
-            actual = sourceRepository.syncSourcesCalled,
-        )
-        assertEquals(
-            expected = true,
-            actual = feedRepository.syncFeedsCalled,
-        )
-    }
-
-    @Test
-    fun init_whenSyncSourcesThrowsCancellationException_rethrowsCleanly() = runTest(context = testDispatcher) {
-        val failingRepo = FakeSourceRepository().apply {
-            syncShouldThrow = CancellationException("Job was cancelled")
-        }
-        val failingViewModel = FeedsViewModel(
-            getFeedsUseCase = getFeedsUseCase,
-            getSourcesUseCase = GetSourcesUseCase(repository = failingRepo),
-            syncSourcesUseCase = SyncSourcesUseCase(repository = failingRepo),
-            syncFeedsUseCase = syncFeedsUseCase,
-        )
-        advanceUntilIdle()
-
-        assertTrue(actual = failingRepo.syncSourcesCalled)
-        assertFalse(actual = failingViewModel.uiState.value.isLoading)
-    }
-
-    @Test
-    fun init_whenSyncFeedsThrowsCancellationException_rethrowsCleanly() = runTest(context = testDispatcher) {
-        val failingRepo = FakeFeedRepository().apply {
-            syncFeedsShouldThrow = CancellationException("Job was cancelled")
-        }
-        val failingViewModel = FeedsViewModel(
-            getFeedsUseCase = getFeedsUseCase,
-            getSourcesUseCase = getSourcesUseCase,
-            syncSourcesUseCase = syncSourcesUseCase,
-            syncFeedsUseCase = SyncFeedsUseCase(repository = failingRepo),
-        )
-        advanceUntilIdle()
-
-        assertTrue(actual = failingRepo.syncFeedsCalled)
-        assertFalse(actual = failingViewModel.uiState.value.isLoading)
     }
 }

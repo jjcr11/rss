@@ -1,5 +1,6 @@
 package com.jjcr11.rss.presentation.navigation
 
+import com.jjcr11.rss.domain.manager.SyncManager
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.model.User
 import com.jjcr11.rss.domain.repository.AuthRepository
@@ -7,6 +8,8 @@ import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -41,7 +44,18 @@ class NavigationViewModelTest {
         }
     }
 
+    private class FakeSyncManager : SyncManager {
+        var syncCalled = false
+        private val _isSyncing = MutableStateFlow(value = false)
+        override val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+        override suspend fun sync() {
+            syncCalled = true
+        }
+    }
+
     private lateinit var repository: FakeAuthRepository
+    private lateinit var syncManager: FakeSyncManager
     private lateinit var observeAuthStateUseCase: ObserveAuthStateUseCase
     private lateinit var viewModel: NavigationViewModel
 
@@ -49,8 +63,12 @@ class NavigationViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         repository = FakeAuthRepository()
+        syncManager = FakeSyncManager()
         observeAuthStateUseCase = ObserveAuthStateUseCase(repository = repository)
-        viewModel = NavigationViewModel(observeAuthStateUseCase = observeAuthStateUseCase)
+        viewModel = NavigationViewModel(
+            observeAuthStateUseCase = observeAuthStateUseCase,
+            syncManager = syncManager,
+        )
     }
 
     @AfterTest
@@ -69,10 +87,11 @@ class NavigationViewModelTest {
         advanceUntilIdle()
 
         assertEquals(expected = AuthState.Unauthenticated, actual = viewModel.authState.value)
+        assertEquals(expected = false, actual = syncManager.syncCalled)
     }
 
     @Test
-    fun authState_whenEmitsAuthenticated_updatesState() = runTest {
+    fun authState_whenEmitsAuthenticated_updatesStateAndTriggersSync() = runTest {
         val user = User(
             id = Uuid.parse(uuidString = "00000000-0000-0000-0000-000000000001"),
             email = "user@test.com",
@@ -84,5 +103,14 @@ class NavigationViewModelTest {
             expected = AuthState.Authenticated(user = user),
             actual = viewModel.authState.value,
         )
+        assertEquals(expected = true, actual = syncManager.syncCalled)
+    }
+
+    @Test
+    fun sync_callsSyncManagerSync() = runTest {
+        viewModel.sync()
+        advanceUntilIdle()
+
+        assertEquals(expected = true, actual = syncManager.syncCalled)
     }
 }
