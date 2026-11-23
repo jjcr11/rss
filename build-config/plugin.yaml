@@ -7,4 +7,4 @@ tasks:
 generated:
   sources:
     - language: kotlin
-      directory: ${tasks.generate.action.generatedSourceDir}
+      directory: ${module.rootDir}/src/generated
