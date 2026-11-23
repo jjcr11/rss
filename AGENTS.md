@@ -47,7 +47,7 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 
 ## Supabase & Seguridad (Memoria de Proyecto)
 - **Estado Actual:** Las tablas `public.sources` y `public.feeds` tienen Row Level Security (RLS) habilitado y permisos restringidos exclusivamente al rol `authenticated`. El rol `anon` tiene permisos revocados.
-  1. `public.sources`: Contiene `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid()`. Política RLS vinculada a `auth.uid() = user_id`.
+  1. `public.sources`: Contiene `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid()`. Política RLS vinculada a `auth.uid() = user_id`. Restricción de unicidad `unique_user_rss_url UNIQUE (user_id, rss_url)` para evitar fuentes duplicadas por usuario.
   2. `public.feeds`: No duplica `user_id`; su política RLS protege los datos mediante subconsulta `EXISTS (SELECT 1 FROM public.sources WHERE sources.id = feeds.source_id AND sources.user_id = auth.uid())`.
   3. Rendimiento: Creados índices en `sources(user_id)` y `feeds(source_id)`.
 
