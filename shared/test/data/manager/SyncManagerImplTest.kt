@@ -4,6 +4,7 @@ import com.jjcr11.rss.domain.model.Feed
 import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
+import com.jjcr11.rss.domain.usecase.FetchFeedsFromSourcesUseCase
 import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,7 @@ class SyncManagerImplTest {
     private class FakeFeedRepository : FeedRepository {
         var syncFeedsCalled = false
         var syncFeedsShouldThrow: Exception? = null
+        var fetchFeedsFromSourcesCalled = false
 
         override fun getAll(): Flow<List<Feed>> = flowOf(value = emptyList())
 
@@ -46,6 +48,10 @@ class SyncManagerImplTest {
         }
 
         override suspend fun setAsRead(id: Uuid) = Unit
+
+        override suspend fun fetchFeedsFromSources() {
+            fetchFeedsFromSourcesCalled = true
+        }
     }
 
     @Test
@@ -66,6 +72,33 @@ class SyncManagerImplTest {
         assertEquals(
             expected = true,
             actual = feedRepository.syncFeedsCalled,
+        )
+        assertFalse(actual = syncManager.isSyncing.value)
+    }
+
+    @Test
+    fun sync_whenFetchFeedsFromSourcesProvided_callsIt() = runTest {
+        val sourceRepository = FakeSourceRepository()
+        val feedRepository = FakeFeedRepository()
+        val syncManager = SyncManagerImpl(
+            syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository),
+            syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository),
+            fetchFeedsFromSourcesUseCase = FetchFeedsFromSourcesUseCase(repository = feedRepository),
+        )
+
+        syncManager.sync()
+
+        assertEquals(
+            expected = true,
+            actual = sourceRepository.syncSourcesCalled,
+        )
+        assertEquals(
+            expected = true,
+            actual = feedRepository.syncFeedsCalled,
+        )
+        assertEquals(
+            expected = true,
+            actual = feedRepository.fetchFeedsFromSourcesCalled,
         )
         assertFalse(actual = syncManager.isSyncing.value)
     }

@@ -398,4 +398,75 @@ class RssDatabaseTest {
         feedDao.setAsSynced(ids = listOf("feed-m-1", "feed-m-2"))
         assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncIds())
     }
+
+    @Test
+    fun getUrlsBySourceId_returnsOnlyUrlsForSpecifiedSource() = runTest {
+        val source1 = SourceEntity(
+            id = "src-urls-1",
+            rssUrl = "https://example.com/rss1",
+            webUrl = "https://example.com/1",
+            name = "Source 1",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val source2 = SourceEntity(
+            id = "src-urls-2",
+            rssUrl = "https://example.com/rss2",
+            webUrl = "https://example.com/2",
+            name = "Source 2",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(sources = listOf(source1, source2))
+
+        val feed1 = FeedEntity(
+            id = "feed-u-1",
+            sourceId = "src-urls-1",
+            title = "Article 1",
+            content = "Body 1",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/item1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed2 = FeedEntity(
+            id = "feed-u-2",
+            sourceId = "src-urls-1",
+            title = "Article 2",
+            content = "Body 2",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/item2",
+            date = 2000L,
+            createdAt = 2000L,
+            updatedAt = 2000L,
+        )
+        val feed3 = FeedEntity(
+            id = "feed-u-3",
+            sourceId = "src-urls-2",
+            title = "Article 3",
+            content = "Body 3",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/item3",
+            date = 3000L,
+            createdAt = 3000L,
+            updatedAt = 3000L,
+        )
+        feedDao.insert(feeds = listOf(feed1, feed2, feed3))
+
+        val urlsSource1 = feedDao.getUrlsBySourceId(sourceId = "src-urls-1")
+        val urlsSource2 = feedDao.getUrlsBySourceId(sourceId = "src-urls-2")
+
+        assertEquals(
+            expected = listOf("https://example.com/item1", "https://example.com/item2"),
+            actual = urlsSource1,
+        )
+        assertEquals(
+            expected = listOf("https://example.com/item3"),
+            actual = urlsSource2,
+        )
+    }
 }
