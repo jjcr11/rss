@@ -55,6 +55,9 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 
 ## Sincronización Offline-First (Memoria de Proyecto)
 - **Estado Actual:** Sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase` y `syncFeeds()` / `SyncFeedsUseCase`) desacoplada de las pantallas mediante `SyncManager`, orquestada desde la raíz de la aplicación (`NavigationViewModel`) al detectar la sesión autenticada. Room actúa como la Única Fuente de Verdad (SSOT).
+- **Eliminación Offline-First de Fuentes:**
+  - `pending_deleted_sources`: Tabla en Room que encola los IDs de fuentes eliminadas localmente en caso de fallo de red o desconexión.
+  - Al ejecutarse `syncSources()`, se sincronizan las eliminaciones pendientes en Supabase (`deleteSources`) y se purgan de la cola local.
 - **Pendiente para el Futuro:** Implementar sincronización manual mediante interacción de usuario (pull-to-refresh en `FeedsScreen`, actualmente postergado y fuera del alcance/scope inmediato) y sincronización periódica en segundo plano (WorkManager).
 
 ---
