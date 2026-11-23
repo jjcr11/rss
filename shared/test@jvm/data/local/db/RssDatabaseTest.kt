@@ -469,4 +469,109 @@ class RssDatabaseTest {
             actual = urlsSource2,
         )
     }
+
+    @Test
+    fun getReadFeedsBySourceId_returnsOnlyReadFeedsForSource() = runTest {
+        val source = SourceEntity(
+            id = "src-read-test",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Source Read Test",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+
+        val readFeed = FeedEntity(
+            id = "feed-read",
+            sourceId = "src-read-test",
+            title = "Read Article",
+            content = "Body",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/read",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val unreadFeed = FeedEntity(
+            id = "feed-unread",
+            sourceId = "src-read-test",
+            title = "Unread Article",
+            content = "Body",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/unread",
+            date = 2000L,
+            createdAt = 2000L,
+            updatedAt = 2000L,
+        )
+        feedDao.insert(feeds = listOf(readFeed, unreadFeed))
+
+        val readFeeds = feedDao.getReadFeedsBySourceId(sourceId = "src-read-test")
+
+        assertEquals(
+            expected = 1,
+            actual = readFeeds.size,
+        )
+        assertEquals(
+            expected = "feed-read",
+            actual = readFeeds.first().id,
+        )
+    }
+
+    @Test
+    fun deleteByIds_deletesSpecifiedFeeds() = runTest {
+        val source = SourceEntity(
+            id = "src-del-by-ids",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Source Delete Test",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+
+        val feed1 = FeedEntity(
+            id = "feed-del-1",
+            sourceId = "src-del-by-ids",
+            title = "Article 1",
+            content = "Body 1",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/del1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed2 = FeedEntity(
+            id = "feed-del-2",
+            sourceId = "src-del-by-ids",
+            title = "Article 2",
+            content = "Body 2",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/del2",
+            date = 2000L,
+            createdAt = 2000L,
+            updatedAt = 2000L,
+        )
+        feedDao.insert(feeds = listOf(feed1, feed2))
+
+        val deletedCount = feedDao.deleteByIds(ids = listOf("feed-del-1"))
+
+        assertEquals(
+            expected = 1,
+            actual = deletedCount,
+        )
+        val remaining = feedDao.getAll().first()
+        assertEquals(
+            expected = 1,
+            actual = remaining.size,
+        )
+        assertEquals(
+            expected = "feed-del-2",
+            actual = remaining.first().id,
+        )
+    }
 }

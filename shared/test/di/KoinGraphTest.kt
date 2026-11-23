@@ -80,6 +80,8 @@ class KoinGraphTest {
                 override suspend fun setAsSynced(ids: List<String>): Int = ids.size
                 override suspend fun getPendingSyncIds(): List<String> = emptyList()
                 override suspend fun getUrlsBySourceId(sourceId: String): List<String> = emptyList()
+                override suspend fun getReadFeedsBySourceId(sourceId: String): List<FeedEntity> = emptyList()
+                override suspend fun deleteByIds(ids: List<String>): Int = ids.size
             }
         }
     }

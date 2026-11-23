@@ -68,6 +68,17 @@ class FeedRepositoryImplTest {
 
         override suspend fun getUrlsBySourceId(sourceId: String): List<String> =
             urlsBySourceId[sourceId] ?: emptyList()
+
+        var readFeedsBySourceId: Map<String, List<FeedEntity>> = emptyMap()
+        val deletedFeedIds = mutableListOf<String>()
+
+        override suspend fun getReadFeedsBySourceId(sourceId: String): List<FeedEntity> =
+            readFeedsBySourceId[sourceId] ?: emptyList()
+
+        override suspend fun deleteByIds(ids: List<String>): Int {
+            deletedFeedIds.addAll(elements = ids)
+            return ids.size
+        }
     }
 
     private class FakeSourceDao : SourceDao {
@@ -102,6 +113,8 @@ class FeedRepositoryImplTest {
         var setFeedsAsReadShouldThrow: Exception? = null
         val insertedFeeds = mutableListOf<FeedDto>()
         var insertFeedsShouldThrow: Exception? = null
+        val deletedFeedIds = mutableListOf<String>()
+        var deleteFeedsShouldThrow: Exception? = null
 
         override suspend fun getUnreadFeeds(): List<FeedDto> = feedsToReturn
 
@@ -118,6 +131,11 @@ class FeedRepositoryImplTest {
         override suspend fun insertFeeds(feeds: List<FeedDto>) {
             insertFeedsShouldThrow?.let { throw it }
             insertedFeeds.addAll(elements = feeds)
+        }
+
+        override suspend fun deleteFeeds(ids: List<String>) {
+            deleteFeedsShouldThrow?.let { throw it }
+            deletedFeedIds.addAll(elements = ids)
         }
     }
 
@@ -630,5 +648,131 @@ class FeedRepositoryImplTest {
         assertFailsWith<CancellationException> {
             repository.fetchFeedsFromSources()
         }
+    }
+
+    @Test
+    fun fetchFeedsFromSources_deletesReadFeedsNotInXml_fromDaoAndSupabase() = runTest {
+        val feedDao = FakeFeedDao()
+        val sourceDao = FakeSourceDao()
+        val supabase = FakeSupabaseRemoteDataSource()
+        val sourceId = Uuid.random().toString()
+        val source = SourceEntity(
+            id = sourceId,
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test Source",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.sourcesFlow = flowOf(value = listOf(source))
+
+        val expiredReadFeed = FeedEntity(
+            id = "expired-feed-1",
+            sourceId = sourceId,
+            title = "Expired Item",
+            content = "Old content",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/old-item",
+            date = 500L,
+            createdAt = 500L,
+            updatedAt = 500L,
+        )
+        val activeReadFeed = FeedEntity(
+            id = "active-read-feed",
+            sourceId = sourceId,
+            title = "Active Item",
+            content = "Active content",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/item1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        feedDao.readFeedsBySourceId = mapOf(
+            sourceId to listOf(expiredReadFeed, activeReadFeed),
+        )
+
+        val mockEngine = MockEngine {
+            respond(
+                content = sampleRssXml,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/xml"),
+            )
+        }
+        val repository = FeedRepositoryImpl(
+            feedDao = feedDao,
+            supabaseRemoteDataSource = supabase,
+            sourceDao = sourceDao,
+            rssRemoteDataSource = createRssRemoteDataSource(mockEngine = mockEngine),
+        )
+
+        repository.fetchFeedsFromSources()
+
+        assertEquals(
+            expected = listOf("expired-feed-1"),
+            actual = feedDao.deletedFeedIds,
+        )
+        assertEquals(
+            expected = listOf("expired-feed-1"),
+            actual = supabase.deletedFeedIds,
+        )
+    }
+
+    @Test
+    fun fetchFeedsFromSources_whenDeleteFeedsInSupabaseThrows_catchesAndDoesNotFail() = runTest {
+        val feedDao = FakeFeedDao()
+        val sourceDao = FakeSourceDao()
+        val supabase = FakeSupabaseRemoteDataSource().apply {
+            deleteFeedsShouldThrow = RuntimeException("Supabase delete failed")
+        }
+        val sourceId = Uuid.random().toString()
+        val source = SourceEntity(
+            id = sourceId,
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test Source",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.sourcesFlow = flowOf(value = listOf(source))
+
+        val expiredReadFeed = FeedEntity(
+            id = "expired-feed-2",
+            sourceId = sourceId,
+            title = "Expired Item",
+            content = "Old content",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/old-item-2",
+            date = 500L,
+            createdAt = 500L,
+            updatedAt = 500L,
+        )
+        feedDao.readFeedsBySourceId = mapOf(
+            sourceId to listOf(expiredReadFeed),
+        )
+
+        val mockEngine = MockEngine {
+            respond(
+                content = sampleRssXml,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/xml"),
+            )
+        }
+        val repository = FeedRepositoryImpl(
+            feedDao = feedDao,
+            supabaseRemoteDataSource = supabase,
+            sourceDao = sourceDao,
+            rssRemoteDataSource = createRssRemoteDataSource(mockEngine = mockEngine),
+        )
+
+        repository.fetchFeedsFromSources()
+
+        assertEquals(
+            expected = listOf("expired-feed-2"),
+            actual = feedDao.deletedFeedIds,
+        )
     }
 }
