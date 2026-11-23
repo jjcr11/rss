@@ -9,6 +9,7 @@ detekt = "1.23.8"
 ktlint = "1.5.0"
 room = "2.7.2"
 sqlite = "2.5.1"
+datastore = "1.1.3"
 koin = "4.2.2"
 ktor = "3.1.1"
 ksoup = "0.2.6"
@@ -39,6 +40,9 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+
+# DataStore (Key-Value Storage)
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
 # Ktor Client
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

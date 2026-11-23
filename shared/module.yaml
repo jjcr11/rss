@@ -37,6 +37,9 @@ dependencies:
   - $libs.androidx.room.runtime
   - $libs.androidx.sqlite.bundled
 
+  # DataStore (Key-Value Preferences)
+  - $libs.androidx.datastore.preferences
+
   # Ktor Client
   - $libs.ktor.client.core
 

@@ -14,6 +14,7 @@ fun initKoin(
                 listOf(
                     networkModule,
                     databaseModule,
+                    preferencesModule,
                     repositoryModule,
                     useCaseModule,
                     presentationModule,
