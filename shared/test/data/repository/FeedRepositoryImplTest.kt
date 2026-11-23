@@ -26,6 +26,14 @@ class FeedRepositoryImplTest {
         }
 
         override fun getAll(): Flow<List<FeedEntity>> = feedsFlow
+
+        var setAsReadId: String? = null
+        var setAsReadResult: Int = 1
+
+        override suspend fun setAsRead(id: String): Int {
+            setAsReadId = id
+            return setAsReadResult
+        }
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(
@@ -37,8 +45,15 @@ class FeedRepositoryImplTest {
         },
     ) {
         var feedsToReturn: List<FeedDto> = emptyList()
+        var setFeedAsReadId: String? = null
+        var setFeedAsReadShouldThrow: Exception? = null
 
         override suspend fun getFeeds(): List<FeedDto> = feedsToReturn
+
+        override suspend fun setFeedAsRead(id: String) {
+            setFeedAsReadId = id
+            setFeedAsReadShouldThrow?.let { throw it }
+        }
     }
 
     @Test
@@ -143,6 +158,51 @@ class FeedRepositoryImplTest {
         assertEquals(
             expected = "Supabase Content",
             actual = inserted.content,
+        )
+    }
+
+    @Test
+    fun setAsRead_whenRowsAffectedGreaterThanZero_updatesDaoAndSupabase() = runTest {
+        val dao = FakeFeedDao()
+        val supabase = FakeSupabaseRemoteDataSource()
+        val repository = FeedRepositoryImpl(
+            feedDao = dao,
+            supabaseRemoteDataSource = supabase,
+        )
+        val feedId = Uuid.random()
+
+        repository.setAsRead(id = feedId)
+
+        assertEquals(
+            expected = feedId.toString(),
+            actual = dao.setAsReadId,
+        )
+        assertEquals(
+            expected = feedId.toString(),
+            actual = supabase.setFeedAsReadId,
+        )
+    }
+
+    @Test
+    fun setAsRead_whenZeroRowsAffected_doesNotCallSupabase() = runTest {
+        val dao = FakeFeedDao()
+        dao.setAsReadResult = 0
+        val supabase = FakeSupabaseRemoteDataSource()
+        val repository = FeedRepositoryImpl(
+            feedDao = dao,
+            supabaseRemoteDataSource = supabase,
+        )
+        val feedId = Uuid.random()
+
+        repository.setAsRead(id = feedId)
+
+        assertEquals(
+            expected = feedId.toString(),
+            actual = dao.setAsReadId,
+        )
+        assertEquals(
+            expected = null,
+            actual = supabase.setFeedAsReadId,
         )
     }
 }
