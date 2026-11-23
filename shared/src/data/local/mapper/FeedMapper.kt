@@ -6,16 +6,16 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 fun FeedEntity.toDomain(): Feed = Feed(
-    id = Uuid.parse(this.id),
-    sourceId = Uuid.parse(this.sourceId),
+    id = Uuid.parse(uuidString = this.id),
+    sourceId = Uuid.parse(uuidString = this.sourceId),
     title = this.title,
     content = this.content,
-    read = this.read,
-    save = this.save,
+    isRead = this.isRead,
+    isSaved = this.isSaved,
     url = this.url,
-    date = Instant.fromEpochMilliseconds(this.date),
-    createdAt = Instant.fromEpochMilliseconds(this.createdAt),
-    updatedAt = Instant.fromEpochMilliseconds(this.updatedAt),
+    date = Instant.fromEpochMilliseconds(epochMilliseconds = this.date),
+    createdAt = Instant.fromEpochMilliseconds(epochMilliseconds = this.createdAt),
+    updatedAt = Instant.fromEpochMilliseconds(epochMilliseconds = this.updatedAt),
 )
 
 fun Feed.toEntity(): FeedEntity = FeedEntity(
@@ -23,8 +23,8 @@ fun Feed.toEntity(): FeedEntity = FeedEntity(
     sourceId = this.sourceId.toString(),
     title = this.title,
     content = this.content,
-    read = this.read,
-    save = this.save,
+    isRead = this.isRead,
+    isSaved = this.isSaved,
     url = this.url,
     date = this.date.toEpochMilliseconds(),
     createdAt = this.createdAt.toEpochMilliseconds(),

@@ -39,7 +39,7 @@ open class SupabaseRemoteDataSource(
             .update(
                 update = {
                     set(
-                        column = "read",
+                        column = "is_read",
                         value = true,
                     )
                 },

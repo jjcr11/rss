@@ -28,10 +28,10 @@ data class FeedEntity(
     val title: String,
     @ColumnInfo(name = "content", defaultValue = "''")
     val content: String = "",
-    @ColumnInfo(name = "read")
-    val read: Boolean,
-    @ColumnInfo(name = "save")
-    val save: Boolean,
+    @ColumnInfo(name = "is_read")
+    val isRead: Boolean,
+    @ColumnInfo(name = "is_saved")
+    val isSaved: Boolean,
     @ColumnInfo(name = "url")
     val url: String,
     @ColumnInfo(name = "date")

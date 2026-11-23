@@ -57,8 +57,8 @@ class FeedXmlMapperTest {
             expected = "https://example.com/posts/clean-architecture-kmp",
             actual = domainFeed.url,
         )
-        assertFalse(actual = domainFeed.read)
-        assertFalse(actual = domainFeed.save)
+        assertFalse(actual = domainFeed.isRead)
+        assertFalse(actual = domainFeed.isSaved)
         assertEquals(
             expected = fixedItemDate,
             actual = domainFeed.date,

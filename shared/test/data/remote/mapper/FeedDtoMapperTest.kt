@@ -16,8 +16,8 @@ class FeedDtoMapperTest {
             sourceId = "223e4567-e89b-12d3-a456-426614174000",
             title = "Test Feed",
             content = "<p>Full content</p>",
-            read = true,
-            save = false,
+            isRead = true,
+            isSaved = false,
             url = "https://example.com/feed-1",
             date = 5000L,
             createdAt = 1000L,
@@ -27,11 +27,11 @@ class FeedDtoMapperTest {
         val domain = dto.toDomain()
 
         assertEquals(
-            expected = Uuid.parse("123e4567-e89b-12d3-a456-426614174000"),
+            expected = Uuid.parse(uuidString = "123e4567-e89b-12d3-a456-426614174000"),
             actual = domain.id,
         )
         assertEquals(
-            expected = Uuid.parse("223e4567-e89b-12d3-a456-426614174000"),
+            expected = Uuid.parse(uuidString = "223e4567-e89b-12d3-a456-426614174000"),
             actual = domain.sourceId,
         )
         assertEquals(
@@ -44,11 +44,11 @@ class FeedDtoMapperTest {
         )
         assertEquals(
             expected = true,
-            actual = domain.read,
+            actual = domain.isRead,
         )
         assertEquals(
             expected = false,
-            actual = domain.save,
+            actual = domain.isSaved,
         )
         assertEquals(
             expected = "https://example.com/feed-1",
@@ -71,12 +71,12 @@ class FeedDtoMapperTest {
     @Test
     fun toDto_mapsDomainToFeedDtoCorrectly() {
         val domain = Feed(
-            id = Uuid.parse("123e4567-e89b-12d3-a456-426614174000"),
-            sourceId = Uuid.parse("223e4567-e89b-12d3-a456-426614174000"),
+            id = Uuid.parse(uuidString = "123e4567-e89b-12d3-a456-426614174000"),
+            sourceId = Uuid.parse(uuidString = "223e4567-e89b-12d3-a456-426614174000"),
             title = "Test Feed",
             content = "<p>Full content</p>",
-            read = true,
-            save = false,
+            isRead = true,
+            isSaved = false,
             url = "https://example.com/feed-1",
             date = Instant.fromEpochMilliseconds(epochMilliseconds = 5000L),
             createdAt = Instant.fromEpochMilliseconds(epochMilliseconds = 1000L),
@@ -103,11 +103,11 @@ class FeedDtoMapperTest {
         )
         assertEquals(
             expected = true,
-            actual = dto.read,
+            actual = dto.isRead,
         )
         assertEquals(
             expected = false,
-            actual = dto.save,
+            actual = dto.isSaved,
         )
         assertEquals(
             expected = "https://example.com/feed-1",

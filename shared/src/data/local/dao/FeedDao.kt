@@ -15,6 +15,6 @@ interface FeedDao {
     @Query("SELECT * FROM feeds ORDER BY date DESC")
     fun getAll(): Flow<List<FeedEntity>>
 
-    @Query("UPDATE feeds SET read = 1 WHERE id = :id")
+    @Query("UPDATE feeds SET is_read = 1 WHERE id = :id")
     suspend fun setAsRead(id: String): Int
 }

@@ -13,10 +13,10 @@ data class FeedDto(
     val title: String,
     @SerialName("content")
     val content: String = "",
-    @SerialName("read")
-    val read: Boolean,
-    @SerialName("save")
-    val save: Boolean,
+    @SerialName("is_read")
+    val isRead: Boolean,
+    @SerialName("is_saved")
+    val isSaved: Boolean,
     @SerialName("url")
     val url: String,
     @SerialName("date")
