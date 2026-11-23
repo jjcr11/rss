@@ -55,6 +55,10 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 
 ## Sincronización Offline-First (Memoria de Proyecto)
 - **Estado Actual:** Sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase` y `syncFeeds()` / `SyncFeedsUseCase`) desacoplada de las pantallas mediante `SyncManager`, orquestada desde la raíz de la aplicación (`NavigationViewModel`) al detectar la sesión autenticada. Room actúa como la Única Fuente de Verdad (SSOT).
+- **Descarga de Feeds RSS al Iniciar la App:**
+  - `fetchFeedsFromSources()` / `FetchFeedsFromSourcesUseCase`: Ejecutado por `SyncManager.sync()` exclusivamente al arrancar la app con sesión activa.
+  - Consulta las fuentes suscritas en Room (`sourceDao.getAll().first()`), obtiene el XML de cada una (`rssRemoteDataSource.fetchRss`), filtra los artículos ya existentes mediante `feedDao.getUrlsBySourceId(sourceId)` (previniendo duplicados y preservando estados de lectura), e inserta los nuevos feeds localmente y en Supabase (`insertFeeds`).
+  - Cada llamada RSS externa está aislada en `try-catch` para que el fallo de un enlace individual no impida la sincronización del resto.
 - **Eliminación Offline-First de Fuentes:**
   - `pending_deleted_sources`: Tabla en Room que encola los IDs de fuentes eliminadas localmente en caso de fallo de red o desconexión.
   - Al ejecutarse `syncSources()`, se sincronizan las eliminaciones pendientes en Supabase (`deleteSources`) y se purgan de la cola local.
