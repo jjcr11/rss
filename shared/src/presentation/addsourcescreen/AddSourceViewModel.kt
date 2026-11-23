@@ -3,7 +3,9 @@ package com.jjcr11.rss.presentation.addsourcescreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
+import com.jjcr11.rss.domain.usecase.DeleteSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +19,13 @@ class AddSourceViewModel(
     private val addSourceUseCase: AddSourceUseCase,
     private val getSourcesUseCase: GetSourcesUseCase,
     private val listenToRealtimeSourcesUseCase: ListenToRealtimeSourcesUseCase,
+    private val deleteSourceUseCase: DeleteSourceUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = AddSourceUiState())
     val uiState: StateFlow<AddSourceUiState> = _uiState.asStateFlow()
+
+    private var currentSources: List<Source> = emptyList()
 
     init {
         listenToRealtimeSources()
@@ -44,6 +49,7 @@ class AddSourceViewModel(
     private fun observeSources() {
         viewModelScope.launch {
             getSourcesUseCase().collect { sources ->
+                currentSources = sources
                 _uiState.update { currentState ->
                     currentState.copy(
                         sources = sources.map { it.toUiModel() },
@@ -56,6 +62,7 @@ class AddSourceViewModel(
     fun onEvent(event: AddSourceUiEvent) {
         when (event) {
             is AddSourceUiEvent.AddFeed -> addFeed(url = event.url)
+            is AddSourceUiEvent.DeleteSource -> deleteSource(source = event.source)
             AddSourceUiEvent.ClearError -> clearError()
         }
     }
@@ -87,6 +94,21 @@ class AddSourceViewModel(
                         isLoading = false,
                         errorMessage = e.message,
                     )
+                }
+            }
+        }
+    }
+
+    private fun deleteSource(source: SourceUiModel) {
+        val domainSource = currentSources.find { it.id.toString() == source.id } ?: return
+        viewModelScope.launch {
+            try {
+                deleteSourceUseCase(source = domainSource)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.withTag(tag = TAG).e(throwable = e) {
+                    "Failed to delete source: ${source.id}"
                 }
             }
         }

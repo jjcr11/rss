@@ -5,5 +5,9 @@ sealed interface AddSourceUiEvent {
         val url: String,
     ) : AddSourceUiEvent
 
+    data class DeleteSource(
+        val source: SourceUiModel,
+    ) : AddSourceUiEvent
+
     data object ClearError : AddSourceUiEvent
 }

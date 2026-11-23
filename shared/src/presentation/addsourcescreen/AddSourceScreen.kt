@@ -56,6 +56,9 @@ fun AddSourceRoute(
         onAddFeedClick = { url ->
             viewModel.onEvent(event = AddSourceUiEvent.AddFeed(url = url))
         },
+        onDeleteSourceClick = { source ->
+            viewModel.onEvent(event = AddSourceUiEvent.DeleteSource(source = source))
+        },
         onBackClick = onBackClick,
     )
 }
