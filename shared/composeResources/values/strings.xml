@@ -12,4 +12,5 @@
     <string name="continue_without_account_button">Continue without account</string>
     <string name="add_source_title">Add Source</string>
     <string name="navigate_back">Back</string>
+    <string name="feed_detail_kicker">%1$s · %2$s</string>
 </resources>
