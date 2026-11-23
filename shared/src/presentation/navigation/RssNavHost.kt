@@ -65,13 +65,17 @@ fun RssNavHost(
                             }
                         }
                     },
+                    /*
+                    // TODO: Implement Guest Mode / Continue without account
                     onContinueWithoutAccountClick = {
+                        viewModel.sync()
                         navController.navigate(route = Screen.Feeds.route) {
                             popUpTo(route = Screen.Auth.route) {
                                 inclusive = true
                             }
                         }
                     },
+                    */
                 )
             }
             composable(route = Screen.Feeds.route) {
