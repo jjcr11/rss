@@ -46,6 +46,10 @@ dependencies:
   # Logging
   - $libs.touchlab.kermit
 
+  # Coil (Image Loading)
+  - $libs.coil.compose
+  - $libs.coil.network.ktor3
+
 dependencies@jvm:
   - $libs.ktor.client.cio
 
