@@ -65,6 +65,9 @@ class KoinGraphTest {
                 override suspend fun insert(feeds: List<FeedEntity>) = Unit
                 override fun getAll(): Flow<List<FeedEntity>> = emptyFlow()
                 override suspend fun setAsRead(id: String): Int = 1
+                override suspend fun setAsSynced(id: String): Int = 1
+                override suspend fun setAsSynced(ids: List<String>): Int = ids.size
+                override suspend fun getPendingSyncFeedIds(): List<String> = emptyList()
             }
         }
     }

@@ -34,6 +34,22 @@ class FeedRepositoryImplTest {
             setAsReadId = id
             return setAsReadResult
         }
+
+        var setAsSyncedId: String? = null
+        var setAsSyncedIds: List<String>? = null
+        var pendingSyncFeedIds: List<String> = emptyList()
+
+        override suspend fun setAsSynced(id: String): Int {
+            setAsSyncedId = id
+            return 1
+        }
+
+        override suspend fun setAsSynced(ids: List<String>): Int {
+            setAsSyncedIds = ids
+            return ids.size
+        }
+
+        override suspend fun getPendingSyncFeedIds(): List<String> = pendingSyncFeedIds
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(
@@ -47,12 +63,19 @@ class FeedRepositoryImplTest {
         var feedsToReturn: List<FeedDto> = emptyList()
         var setFeedAsReadId: String? = null
         var setFeedAsReadShouldThrow: Exception? = null
+        var setFeedsAsReadIds: List<String>? = null
+        var setFeedsAsReadShouldThrow: Exception? = null
 
         override suspend fun getFeeds(): List<FeedDto> = feedsToReturn
 
         override suspend fun setFeedAsRead(id: String) {
             setFeedAsReadId = id
             setFeedAsReadShouldThrow?.let { throw it }
+        }
+
+        override suspend fun setFeedsAsRead(ids: List<String>) {
+            setFeedsAsReadIds = ids
+            setFeedsAsReadShouldThrow?.let { throw it }
         }
     }
 
@@ -162,7 +185,55 @@ class FeedRepositoryImplTest {
     }
 
     @Test
-    fun setAsRead_whenRowsAffectedGreaterThanZero_updatesDaoAndSupabase() = runTest {
+    fun syncFeeds_whenPendingSyncExists_syncsPendingFeedsToSupabaseAndMarksAsSynced() = runTest {
+        val dao = FakeFeedDao()
+        dao.pendingSyncFeedIds = listOf("feed-1", "feed-2")
+        val supabase = FakeSupabaseRemoteDataSource()
+        val repository = FeedRepositoryImpl(
+            feedDao = dao,
+            supabaseRemoteDataSource = supabase,
+        )
+
+        repository.syncFeeds()
+
+        assertEquals(
+            expected = listOf("feed-1", "feed-2"),
+            actual = supabase.setFeedsAsReadIds,
+        )
+        assertEquals(
+            expected = listOf("feed-1", "feed-2"),
+            actual = dao.setAsSyncedIds,
+        )
+    }
+
+    @Test
+    fun syncFeeds_whenPendingSyncThrows_doesNotFetchOrInsertRemoteFeeds() = runTest {
+        val dao = FakeFeedDao()
+        dao.pendingSyncFeedIds = listOf("feed-1")
+        val supabase = FakeSupabaseRemoteDataSource()
+        supabase.setFeedsAsReadShouldThrow = RuntimeException("Network error")
+        val repository = FeedRepositoryImpl(
+            feedDao = dao,
+            supabaseRemoteDataSource = supabase,
+        )
+
+        try {
+            repository.syncFeeds()
+        } catch (_: Exception) {
+        }
+
+        assertEquals(
+            expected = null,
+            actual = dao.setAsSyncedIds,
+        )
+        assertEquals(
+            expected = 0,
+            actual = dao.insertedFeeds.size,
+        )
+    }
+
+    @Test
+    fun setAsRead_whenRowsAffectedGreaterThanZero_updatesDaoAndSupabaseAndMarksSynced() = runTest {
         val dao = FakeFeedDao()
         val supabase = FakeSupabaseRemoteDataSource()
         val repository = FeedRepositoryImpl(
@@ -180,6 +251,33 @@ class FeedRepositoryImplTest {
         assertEquals(
             expected = feedId.toString(),
             actual = supabase.setFeedAsReadId,
+        )
+        assertEquals(
+            expected = feedId.toString(),
+            actual = dao.setAsSyncedId,
+        )
+    }
+
+    @Test
+    fun setAsRead_whenSupabaseThrows_catchesExceptionAndDoesNotMarkSynced() = runTest {
+        val dao = FakeFeedDao()
+        val supabase = FakeSupabaseRemoteDataSource()
+        supabase.setFeedAsReadShouldThrow = RuntimeException("Network error")
+        val repository = FeedRepositoryImpl(
+            feedDao = dao,
+            supabaseRemoteDataSource = supabase,
+        )
+        val feedId = Uuid.random()
+
+        repository.setAsRead(id = feedId)
+
+        assertEquals(
+            expected = feedId.toString(),
+            actual = dao.setAsReadId,
+        )
+        assertEquals(
+            expected = null,
+            actual = dao.setAsSyncedId,
         )
     }
 

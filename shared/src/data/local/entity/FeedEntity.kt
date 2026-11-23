@@ -40,4 +40,6 @@ data class FeedEntity(
     val createdAt: Long,
     @ColumnInfo(name = "updated_at")
     val updatedAt: Long,
+    @ColumnInfo(name = "is_pending_sync", defaultValue = "0")
+    val isPendingSync: Boolean = false,
 )

@@ -22,6 +22,13 @@ class FeedRepositoryImpl(
     }
 
     override suspend fun syncFeeds() {
+        val ids = feedDao.getPendingSyncFeedIds()
+        if (ids.isNotEmpty()) {
+            supabaseRemoteDataSource.setFeedsAsRead(ids = ids)
+            feedDao.setAsSynced(ids = ids)
+        }
+
+
         val feeds = supabaseRemoteDataSource.getFeeds()
         val feedsEntity = feeds.map { it.toDomain().toEntity() }
         if (feedsEntity.isNotEmpty()) {
@@ -35,6 +42,7 @@ class FeedRepositoryImpl(
         if (rowsAffected > 0) {
             try {
                 supabaseRemoteDataSource.setFeedAsRead(id = stringId)
+                feedDao.setAsSynced(id = stringId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

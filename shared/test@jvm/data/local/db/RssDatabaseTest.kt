@@ -164,4 +164,93 @@ class RssDatabaseTest {
         assertEquals(expected = "feed-a", actual = feeds[1].id)
         assertEquals(expected = "Body A", actual = feeds[1].content)
     }
+
+    @Test
+    fun setAsRead_marksFeedAsReadAndPendingSync() = runTest {
+        val source = SourceEntity(
+            id = "src-sync-test",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Source for Sync Test",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+
+        val feed = FeedEntity(
+            id = "feed-sync-1",
+            sourceId = "src-sync-test",
+            title = "Article",
+            content = "Body",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+            isPendingSync = false,
+        )
+        feedDao.insert(feeds = listOf(feed))
+
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+
+        val rows = feedDao.setAsRead(id = "feed-sync-1")
+        assertEquals(expected = 1, actual = rows)
+
+        assertEquals(
+            expected = listOf("feed-sync-1"),
+            actual = feedDao.getPendingSyncFeedIds(),
+        )
+
+        feedDao.setAsSynced(id = "feed-sync-1")
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+    }
+
+    @Test
+    fun setAsSynced_withListOfIds_clearsPendingSyncForMultipleFeeds() = runTest {
+        val source = SourceEntity(
+            id = "src-sync-multi",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Source Multi",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+
+        val feed1 = FeedEntity(
+            id = "feed-m-1",
+            sourceId = "src-sync-multi",
+            title = "A1",
+            content = "B1",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed2 = FeedEntity(
+            id = "feed-m-2",
+            sourceId = "src-sync-multi",
+            title = "A2",
+            content = "B2",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/2",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        feedDao.insert(feeds = listOf(feed1, feed2))
+
+        feedDao.setAsRead(id = "feed-m-1")
+        feedDao.setAsRead(id = "feed-m-2")
+
+        val pending = feedDao.getPendingSyncFeedIds()
+        assertEquals(expected = 2, actual = pending.size)
+
+        feedDao.setAsSynced(ids = listOf("feed-m-1", "feed-m-2"))
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+    }
 }

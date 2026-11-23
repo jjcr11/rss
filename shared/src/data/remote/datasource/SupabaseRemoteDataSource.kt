@@ -53,6 +53,26 @@ open class SupabaseRemoteDataSource(
             }
     }
 
+    open suspend fun setFeedsAsRead(ids: List<String>) {
+        supabaseClient
+            .from(table = FEEDS_TABLE)
+            .update(
+                update = {
+                    set(
+                        column = "is_read",
+                        value = true,
+                    )
+                },
+            ) {
+                filter {
+                    isIn(
+                        column = "id",
+                        values = ids,
+                    )
+                }
+            }
+    }
+
     open fun observeSources(): Flow<SourceDto> =
         flow {
             val channel = supabaseClient.channel(channelId = "source-channel")
