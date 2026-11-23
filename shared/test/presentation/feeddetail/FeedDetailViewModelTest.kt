@@ -6,6 +6,7 @@ import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
+import com.jjcr11.rss.domain.usecase.SetFeedAsReadUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -30,11 +31,16 @@ class FeedDetailViewModelTest {
 
     private class FakeFeedRepository : FeedRepository {
         val feedsFlow = MutableStateFlow<List<Feed>>(value = emptyList())
+        var setAsReadId: Uuid? = null
 
         override fun getAll(): Flow<List<Feed>> = feedsFlow
 
         override suspend fun syncFeeds() {
             throw NotImplementedError()
+        }
+
+        override suspend fun setAsRead(id: Uuid) {
+            setAsReadId = id
         }
     }
 
@@ -58,6 +64,7 @@ class FeedDetailViewModelTest {
 
     private lateinit var feedRepository: FakeFeedRepository
     private lateinit var sourceRepository: FakeSourceRepository
+    private lateinit var setFeedAsReadUseCase: SetFeedAsReadUseCase
     private lateinit var viewModel: FeedDetailViewModel
 
     @BeforeTest
@@ -65,9 +72,11 @@ class FeedDetailViewModelTest {
         Dispatchers.setMain(dispatcher = testDispatcher)
         feedRepository = FakeFeedRepository()
         sourceRepository = FakeSourceRepository()
+        setFeedAsReadUseCase = SetFeedAsReadUseCase(repository = feedRepository)
         viewModel = FeedDetailViewModel(
             getFeedsUseCase = GetFeedsUseCase(repository = feedRepository),
             getSourcesUseCase = GetSourcesUseCase(repository = sourceRepository),
+            setFeedAsReadUseCase = setFeedAsReadUseCase,
         )
     }
 
@@ -198,5 +207,50 @@ class FeedDetailViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals(expected = 1, actual = state.initialIndex)
+    }
+
+    @Test
+    fun onPageChanged_marksTargetFeedAsRead() = runTest {
+        val sourceId = Uuid.parse(uuidString = "123e4567-e89b-12d3-a456-426614174000")
+        val feedId1 = Uuid.parse(uuidString = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+        val feedId2 = Uuid.parse(uuidString = "b2c3d4e5-f6a7-8901-bcde-f12345678901")
+        val now = Instant.parse(input = "2026-11-20T10:00:00Z")
+
+        feedRepository.feedsFlow.value = listOf(
+            Feed(
+                id = feedId1,
+                sourceId = sourceId,
+                title = "Article 1",
+                content = "",
+                read = false,
+                save = false,
+                url = "https://example.com/1",
+                date = now,
+                createdAt = now,
+                updatedAt = now,
+            ),
+            Feed(
+                id = feedId2,
+                sourceId = sourceId,
+                title = "Article 2",
+                content = "",
+                read = false,
+                save = false,
+                url = "https://example.com/2",
+                date = now,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
+
+        advanceUntilIdle()
+
+        viewModel.onPageChanged(index = 1)
+        advanceUntilIdle()
+
+        assertEquals(
+            expected = feedId2,
+            actual = feedRepository.setAsReadId,
+        )
     }
 }

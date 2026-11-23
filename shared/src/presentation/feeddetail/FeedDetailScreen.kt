@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,6 +91,7 @@ fun FeedDetailRoute(
         uiState = uiState,
         modifier = modifier,
         onBackClick = onBackClick,
+        onPageChanged = { page -> viewModel.onPageChanged(index = page) },
     )
 }
 
@@ -98,6 +100,7 @@ fun FeedDetailScreen(
     uiState: FeedDetailUiState,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
+    onPageChanged: (Int) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -139,7 +142,11 @@ fun FeedDetailScreen(
                 ),
                 pageCount = { uiState.feeds.size },
             )
-
+            LaunchedEffect(key1 = pagerState.currentPage) {
+                snapshotFlow { pagerState.currentPage }.collect { page ->
+                    onPageChanged(page)
+                }
+            }
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
