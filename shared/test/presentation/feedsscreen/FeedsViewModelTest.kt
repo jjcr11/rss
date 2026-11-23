@@ -161,4 +161,82 @@ class FeedsViewModelTest {
             actual = feeds[0].sourceName,
         )
     }
+
+    @Test
+    fun init_hidesFeedsThatWereAlreadyReadOnInitialEmission() = runTest(context = testDispatcher) {
+        val instant = Instant.parse(input = "2024-11-04T10:00:00Z")
+        val unreadFeed = Feed(
+            id = Uuid.random(),
+            sourceId = Uuid.random(),
+            title = "Unread Feed",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/unread",
+            date = instant,
+            createdAt = instant,
+            updatedAt = instant,
+        )
+        val alreadyReadFeed = Feed(
+            id = Uuid.random(),
+            sourceId = Uuid.random(),
+            title = "Already Read Feed",
+            isRead = true,
+            isSaved = false,
+            url = "https://example.com/read",
+            date = instant,
+            createdAt = instant,
+            updatedAt = instant,
+        )
+
+        feedRepository.feedsFlow.value = listOf(unreadFeed, alreadyReadFeed)
+        advanceUntilIdle()
+
+        val (feeds, isLoading) = viewModel.uiState.value
+        assertFalse(actual = isLoading)
+        assertEquals(
+            expected = 1,
+            actual = feeds.size,
+        )
+        assertEquals(
+            expected = unreadFeed.id.toString(),
+            actual = feeds[0].id,
+        )
+    }
+
+    @Test
+    fun feedMarkedAsReadDuringSession_remainsInListWithIsReadTrue() = runTest(context = testDispatcher) {
+        val instant = Instant.parse(input = "2024-11-04T10:00:00Z")
+        val feedId = Uuid.random()
+        val initialFeed = Feed(
+            id = feedId,
+            sourceId = Uuid.random(),
+            title = "Session Feed",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/session",
+            date = instant,
+            createdAt = instant,
+            updatedAt = instant,
+        )
+
+        feedRepository.feedsFlow.value = listOf(initialFeed)
+        advanceUntilIdle()
+
+        assertEquals(
+            expected = 1,
+            actual = viewModel.uiState.value.feeds.size,
+        )
+        assertFalse(actual = viewModel.uiState.value.feeds[0].isRead)
+
+        val updatedFeed = initialFeed.copy(isRead = true)
+        feedRepository.feedsFlow.value = listOf(updatedFeed)
+        advanceUntilIdle()
+
+        val (feeds, _) = viewModel.uiState.value
+        assertEquals(
+            expected = 1,
+            actual = feeds.size,
+        )
+        assertTrue(actual = feeds[0].isRead)
+    }
 }

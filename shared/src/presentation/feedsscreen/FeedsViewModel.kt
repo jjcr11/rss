@@ -19,6 +19,9 @@ class FeedsViewModel(
     private val _uiState = MutableStateFlow(value = FeedsUiState(isLoading = true))
     val uiState: StateFlow<FeedsUiState> = _uiState.asStateFlow()
 
+    private val initiallyHiddenFeedIds = mutableSetOf<String>()
+    private var isInitialEmission = true
+
     init {
         observeFeeds()
     }
@@ -29,8 +32,20 @@ class FeedsViewModel(
                 flow = getFeedsUseCase(),
                 flow2 = getSourcesUseCase(),
                 transform = { feeds, sources ->
+                    if (isInitialEmission && feeds.isNotEmpty()) {
+                        initiallyHiddenFeedIds.addAll(
+                            elements = feeds.filter { feed -> feed.isRead }
+                                .map { feed -> feed.id.toString() },
+                        )
+                        isInitialEmission = false
+                    }
+
+                    val visibleFeeds = feeds.filterNot { feed ->
+                        feed.id.toString() in initiallyHiddenFeedIds
+                    }
+
                     val sourcesMap = sources.associateBy { source -> source.id }
-                    feeds.map { feed ->
+                    visibleFeeds.map { feed ->
                         feed.toUiModel(
                             sourceName = sourcesMap[feed.sourceId]?.name.orEmpty(),
                         )
