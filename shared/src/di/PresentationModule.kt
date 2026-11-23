@@ -28,6 +28,7 @@ val presentationModule = module {
         FeedDetailViewModel(
             getFeedsUseCase = get(),
             getSourcesUseCase = get(),
+            setFeedAsReadUseCase = get(),
         )
     }
     viewModel {

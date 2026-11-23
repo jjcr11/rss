@@ -17,6 +17,7 @@ import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.SetFeedAsReadUseCase
 import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
 import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
@@ -62,6 +63,7 @@ class KoinGraphTest {
             object : FeedDao {
                 override suspend fun insert(feeds: List<FeedEntity>) = Unit
                 override fun getAll(): Flow<List<FeedEntity>> = emptyFlow()
+                override suspend fun setAsRead(id: String): Int = 1
             }
         }
     }
@@ -123,6 +125,7 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<ListenToRealtimeSourcesUseCase>())
         assertNotNull(actual = koin.get<SignUpUseCase>())
         assertNotNull(actual = koin.get<SignInUseCase>())
+        assertNotNull(actual = koin.get<SetFeedAsReadUseCase>())
         assertNotNull(actual = koin.get<AuthenticateWithEmailUseCase>())
         assertNotNull(actual = koin.get<ObserveAuthStateUseCase>())
 
