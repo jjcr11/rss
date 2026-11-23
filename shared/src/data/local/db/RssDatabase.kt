@@ -11,7 +11,7 @@ import com.jjcr11.rss.data.local.entity.SourceEntity
 
 @Database(
     entities = [SourceEntity::class, FeedEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @ConstructedBy(RssDatabaseConstructor::class)

@@ -2,9 +2,18 @@ package com.jjcr11.rss.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "sources")
+@Entity(
+    tableName = "sources",
+    indices = [
+        Index(
+            value = ["rss_url"],
+            unique = true,
+        ),
+    ],
+)
 data class SourceEntity(
     @PrimaryKey
     @ColumnInfo(name = "id")

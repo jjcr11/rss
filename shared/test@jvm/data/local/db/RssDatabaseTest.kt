@@ -53,6 +53,33 @@ class RssDatabaseTest {
     }
 
     @Test
+    fun insertSource_withDuplicateRssUrl_isIgnoredDueToUniqueIndex() = runTest {
+        val source1 = SourceEntity(
+            id = "src-dup-1",
+            rssUrl = "https://example.com/unique-rss",
+            webUrl = "https://example.com",
+            name = "Test Source 1",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val source2 = SourceEntity(
+            id = "src-dup-2",
+            rssUrl = "https://example.com/unique-rss",
+            webUrl = "https://example.com/other",
+            name = "Test Source 2",
+            createdAt = 2000L,
+            updatedAt = 2000L,
+        )
+
+        sourceDao.insert(source = source1)
+        sourceDao.insert(source = source2)
+
+        val sources = sourceDao.getAll().first()
+        assertEquals(expected = 1, actual = sources.size)
+        assertEquals(expected = "src-dup-1", actual = sources.first().id)
+    }
+
+    @Test
     fun insertWithFeeds_savesSourceAndAssociatedFeeds() = runTest {
         val source = SourceEntity(
             id = "src-2",
