@@ -26,4 +26,7 @@ interface FeedDao {
 
     @Query("SELECT id FROM feeds WHERE is_pending_sync = 1")
     suspend fun getPendingSyncIds(): List<String>
+
+    @Query("SELECT url FROM feeds WHERE source_id = :sourceId")
+    suspend fun getUrlsBySourceId(sourceId: String): List<String>
 }

@@ -3,6 +3,7 @@ package com.jjcr11.rss.di
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import com.jjcr11.rss.domain.usecase.DeleteSourceUseCase
+import com.jjcr11.rss.domain.usecase.FetchFeedsFromSourcesUseCase
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
@@ -22,6 +23,11 @@ val useCaseModule = module {
     }
     factory {
         DeleteSourceUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        FetchFeedsFromSourcesUseCase(
             repository = get(),
         )
     }

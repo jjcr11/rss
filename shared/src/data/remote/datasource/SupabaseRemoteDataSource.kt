@@ -18,11 +18,15 @@ import kotlinx.serialization.json.jsonPrimitive
 open class SupabaseRemoteDataSource(
     private val supabaseClient: SupabaseClient,
 ) {
-    open suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
-        supabaseClient.from(table = SOURCES_TABLE).insert(value = source)
+    open suspend fun insertFeeds(feeds: List<FeedDto>) {
         if (feeds.isNotEmpty()) {
             supabaseClient.from(table = FEEDS_TABLE).insert(values = feeds)
         }
+    }
+
+    open suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
+        supabaseClient.from(table = SOURCES_TABLE).insert(value = source)
+        insertFeeds(feeds = feeds)
     }
 
     open suspend fun getSources(): List<SourceDto> =

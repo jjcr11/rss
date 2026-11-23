@@ -10,4 +10,6 @@ interface FeedRepository {
     suspend fun syncFeeds()
 
     suspend fun setAsRead(id: Uuid)
+
+    suspend fun fetchFeedsFromSources() {}
 }

@@ -15,6 +15,7 @@ val repositoryModule = module {
         SyncManagerImpl(
             syncSourcesUseCase = get(),
             syncFeedsUseCase = get(),
+            fetchFeedsFromSourcesUseCase = get(),
         )
     }
     single<SourceRepository> {
@@ -28,6 +29,8 @@ val repositoryModule = module {
         FeedRepositoryImpl(
             feedDao = get(),
             supabaseRemoteDataSource = get(),
+            sourceDao = get(),
+            rssRemoteDataSource = get(),
         )
     }
     single<AuthRepository> {
