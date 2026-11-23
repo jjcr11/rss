@@ -43,6 +43,8 @@ class FeedsViewModelTest {
             syncFeedsCalled = true
             syncFeedsShouldThrow?.let { throw it }
         }
+
+        override suspend fun setAsRead(id: Uuid) = Unit
     }
 
     private class FakeSourceRepository : SourceRepository {

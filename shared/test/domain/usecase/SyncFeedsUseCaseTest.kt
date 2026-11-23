@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 
 class SyncFeedsUseCaseTest {
 
@@ -18,6 +19,8 @@ class SyncFeedsUseCaseTest {
         override suspend fun syncFeeds() {
             syncFeedsCalled = true
         }
+
+        override suspend fun setAsRead(id: Uuid) = Unit
     }
 
     @Test

@@ -19,6 +19,8 @@ class GetFeedsUseCaseTest {
         override fun getAll(): Flow<List<Feed>> = feedsFlow
 
         override suspend fun syncFeeds() = Unit
+
+        override suspend fun setAsRead(id: Uuid) = Unit
     }
 
     @Test
