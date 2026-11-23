@@ -54,17 +54,15 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 ---
 
 ## Sincronización Offline-First (Memoria de Proyecto)
-- **Estado Actual:** Sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase` y `syncFeeds()` / `SyncFeedsUseCase`) implementada para descargar fuentes y feeds desde Supabase a Room al inicializar `FeedsViewModel`, preservando Room como la Única Fuente de Verdad (SSOT).
-- **Pendiente para el Futuro:** Implementar sincronización periódica en segundo plano (WorkManager) o mediante interacción de usuario (pull-to-refresh en `FeedsScreen`).
+- **Estado Actual:** Sincronización remota hacia local (`syncSources()` / `SyncSourcesUseCase` y `syncFeeds()` / `SyncFeedsUseCase`) desacoplada de las pantallas mediante `SyncManager`, orquestada desde la raíz de la aplicación (`NavigationViewModel`) al detectar la sesión autenticada. Room actúa como la Única Fuente de Verdad (SSOT).
+- **Pendiente para el Futuro:** Implementar sincronización manual mediante interacción de usuario (pull-to-refresh en `FeedsScreen`, actualmente postergado y fuera del alcance/scope inmediato) y sincronización periódica en segundo plano (WorkManager).
 
 ---
 
 ## Supabase Auth (Memoria de Proyecto)
-- **Autenticación Opcional (Modo Invitado vs Registrado):** El inicio de sesión / registro con Supabase Auth será completamente opcional.
-  - **Modo Invitado / Sin Cuenta:** El usuario puede saltarse el login y utilizar la app de forma 100% local, usando Room como almacenamiento exclusivo y sin interactuar con Supabase.
-  - **Modo Registrado:** Permite respaldo y sincronización remota de fuentes y feeds en la nube.
-  - **Migración de Datos:** Si un usuario invitado decide registrarse posteriormente, se contemplará migrar y subir sus fuentes locales existentes en Room a su nueva cuenta en Supabase.
-- **Pendiente para el Futuro:** Implementar los flujos de autenticación (inicio de sesión, registro y gestión de sesión persistente), así como la vinculación de la sesión con el aislamiento de datos por usuario en Supabase (`user_id = auth.uid()`).
+- **Autenticación Opcional (Modo Invitado vs Registrado):**
+  - **Estado Actual:** El botón y flujo de Modo Invitado ("Continuar sin cuenta" en `AuthScreen` y `RssNavHost`) se encuentran temporalmente comentados para concentrar los esfuerzos y estabilizar primero el flujo de autenticación por correo/contraseña y la sincronización en la nube.
+  - **Pendiente para el Futuro (Modo Invitado):** Rehabilitar el Modo Invitado permitiendo al usuario saltarse el login y utilizar la app de forma 100% local (usando Room como almacenamiento exclusivo sin interactuar con Supabase), persistir la preferencia de `isGuestMode` junto a la pantalla de Splash Screen, y contemplar la posterior migración de datos locales a Supabase si el usuario decide crear una cuenta más adelante.
 
 ---
 
