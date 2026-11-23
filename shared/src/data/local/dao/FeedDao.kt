@@ -25,5 +25,5 @@ interface FeedDao {
     suspend fun setAsSynced(ids: List<String>): Int
 
     @Query("SELECT id FROM feeds WHERE is_pending_sync = 1")
-    suspend fun getPendingSyncFeedIds(): List<String>
+    suspend fun getPendingSyncIds(): List<String>
 }

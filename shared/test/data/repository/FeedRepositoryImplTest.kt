@@ -49,7 +49,7 @@ class FeedRepositoryImplTest {
             return ids.size
         }
 
-        override suspend fun getPendingSyncFeedIds(): List<String> = pendingSyncFeedIds
+        override suspend fun getPendingSyncIds(): List<String> = pendingSyncFeedIds
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(
@@ -66,7 +66,7 @@ class FeedRepositoryImplTest {
         var setFeedsAsReadIds: List<String>? = null
         var setFeedsAsReadShouldThrow: Exception? = null
 
-        override suspend fun getFeeds(): List<FeedDto> = feedsToReturn
+        override suspend fun getUnreadFeeds(): List<FeedDto> = feedsToReturn
 
         override suspend fun setFeedAsRead(id: String) {
             setFeedAsReadId = id

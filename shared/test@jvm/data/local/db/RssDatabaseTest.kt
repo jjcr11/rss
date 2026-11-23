@@ -192,18 +192,18 @@ class RssDatabaseTest {
         )
         feedDao.insert(feeds = listOf(feed))
 
-        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncIds())
 
         val rows = feedDao.setAsRead(id = "feed-sync-1")
         assertEquals(expected = 1, actual = rows)
 
         assertEquals(
             expected = listOf("feed-sync-1"),
-            actual = feedDao.getPendingSyncFeedIds(),
+            actual = feedDao.getPendingSyncIds(),
         )
 
         feedDao.setAsSynced(id = "feed-sync-1")
-        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncIds())
     }
 
     @Test
@@ -247,10 +247,10 @@ class RssDatabaseTest {
         feedDao.setAsRead(id = "feed-m-1")
         feedDao.setAsRead(id = "feed-m-2")
 
-        val pending = feedDao.getPendingSyncFeedIds()
+        val pending = feedDao.getPendingSyncIds()
         assertEquals(expected = 2, actual = pending.size)
 
         feedDao.setAsSynced(ids = listOf("feed-m-1", "feed-m-2"))
-        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncFeedIds())
+        assertEquals(expected = emptyList(), actual = feedDao.getPendingSyncIds())
     }
 }

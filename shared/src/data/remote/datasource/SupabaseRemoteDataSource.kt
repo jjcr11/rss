@@ -28,9 +28,13 @@ open class SupabaseRemoteDataSource(
             .select()
             .decodeList()
 
-    open suspend fun getFeeds(): List<FeedDto> =
+    open suspend fun getUnreadFeeds(): List<FeedDto> =
         supabaseClient.from(table = FEEDS_TABLE)
-            .select()
+            .select {
+                filter {
+                    eq("is_read", false)
+                }
+            }
             .decodeList()
 
     open suspend fun setFeedAsRead(id: String) {
