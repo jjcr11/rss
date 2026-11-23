@@ -15,6 +15,7 @@ import com.jjcr11.rss.domain.repository.FeedRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
+import com.jjcr11.rss.domain.usecase.DeleteSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
@@ -129,6 +130,7 @@ class KoinGraphTest {
 
         // Use Cases
         assertNotNull(actual = koin.get<AddSourceUseCase>())
+        assertNotNull(actual = koin.get<DeleteSourceUseCase>())
         assertNotNull(actual = koin.get<GetSourcesUseCase>())
         assertNotNull(actual = koin.get<GetFeedsUseCase>())
         assertNotNull(actual = koin.get<SyncSourcesUseCase>())

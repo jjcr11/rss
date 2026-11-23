@@ -3,6 +3,7 @@ package com.jjcr11.rss.presentation.addsourcescreen
 import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
+import com.jjcr11.rss.domain.usecase.DeleteSourceUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import kotlinx.coroutines.Dispatchers
@@ -59,13 +60,23 @@ class AddSourceViewModelTest {
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
 
-        override suspend fun delete(source: Source): Boolean = true
+        var lastDeletedSource: Source? = null
+        var deleteShouldThrow: Exception? = null
+
+        override suspend fun delete(source: Source): Boolean {
+            lastDeletedSource = source
+            deleteShouldThrow?.let { throw it }
+            savedSources.remove(element = source)
+            sourcesFlow.value = savedSources.toList()
+            return true
+        }
     }
 
     private lateinit var repository: FakeSourceRepository
     private lateinit var addSourceUseCase: AddSourceUseCase
     private lateinit var getSourcesUseCase: GetSourcesUseCase
     private lateinit var listenToRealtimeSourcesUseCase: ListenToRealtimeSourcesUseCase
+    private lateinit var deleteSourceUseCase: DeleteSourceUseCase
     private lateinit var viewModel: AddSourceViewModel
 
     @BeforeTest
@@ -75,10 +86,12 @@ class AddSourceViewModelTest {
         addSourceUseCase = AddSourceUseCase(repository = repository)
         getSourcesUseCase = GetSourcesUseCase(repository = repository)
         listenToRealtimeSourcesUseCase = ListenToRealtimeSourcesUseCase(repository = repository)
+        deleteSourceUseCase = DeleteSourceUseCase(repository = repository)
         viewModel = AddSourceViewModel(
             addSourceUseCase = addSourceUseCase,
             getSourcesUseCase = getSourcesUseCase,
             listenToRealtimeSourcesUseCase = listenToRealtimeSourcesUseCase,
+            deleteSourceUseCase = deleteSourceUseCase,
         )
     }
 
@@ -225,10 +238,75 @@ class AddSourceViewModelTest {
             addSourceUseCase = AddSourceUseCase(repository = failingRepo),
             getSourcesUseCase = GetSourcesUseCase(repository = failingRepo),
             listenToRealtimeSourcesUseCase = ListenToRealtimeSourcesUseCase(repository = failingRepo),
+            deleteSourceUseCase = DeleteSourceUseCase(repository = failingRepo),
         )
         advanceUntilIdle()
 
         assertTrue(actual = failingRepo.listenToRealtimeSourcesCalled)
         assertNull(actual = failingViewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun onEvent_deleteSource_whenSourceExists_callsDeleteSourceUseCase() = runTest(context = testDispatcher) {
+        val source = Source(
+            id = Uuid.random(),
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+        )
+        repository.savedSources.add(element = source)
+        repository.sourcesFlow.value = listOf(source)
+        advanceUntilIdle()
+
+        viewModel.onEvent(
+            event = AddSourceUiEvent.DeleteSource(source = source.toUiModel()),
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            expected = source,
+            actual = repository.lastDeletedSource,
+        )
+    }
+
+    @Test
+    fun onEvent_deleteSource_whenSourceNotFound_doesNotCallDeleteSource() = runTest(context = testDispatcher) {
+        val nonExistentSourceUiModel = SourceUiModel(
+            id = Uuid.random().toString(),
+            name = "Non Existent",
+            url = "https://nonexistent.com",
+        )
+
+        viewModel.onEvent(
+            event = AddSourceUiEvent.DeleteSource(source = nonExistentSourceUiModel),
+        )
+        advanceUntilIdle()
+
+        assertNull(actual = repository.lastDeletedSource)
+    }
+
+    @Test
+    fun onEvent_deleteSource_whenCancellationExceptionThrown_rethrowsCleanly() = runTest(context = testDispatcher) {
+        val source = Source(
+            id = Uuid.random(),
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test",
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now(),
+        )
+        repository.savedSources.add(element = source)
+        repository.sourcesFlow.value = listOf(source)
+        repository.deleteShouldThrow = CancellationException("Job was cancelled")
+        advanceUntilIdle()
+
+        viewModel.onEvent(
+            event = AddSourceUiEvent.DeleteSource(source = source.toUiModel()),
+        )
+        advanceUntilIdle()
+
+        assertNull(actual = viewModel.uiState.value.errorMessage)
     }
 }
