@@ -4,6 +4,7 @@ import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
 import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
+import com.jjcr11.rss.data.remote.datasource.RealtimeSourceEvent
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
 import com.jjcr11.rss.data.remote.dto.FeedDto
@@ -39,6 +40,7 @@ class SourceRepositoryImplTest {
         val insertedSources = mutableListOf<SourceEntity>()
         val insertedFeeds = mutableListOf<FeedEntity>()
         val deletedSources = mutableListOf<SourceEntity>()
+        val deletedSourceIds = mutableListOf<String>()
         val pendingDeletedSources = mutableListOf<PendingDeletedSourceEntity>()
         var sourcesFlow: Flow<List<SourceEntity>> = flowOf(emptyList())
         var deleteResult: Int = 1
@@ -59,6 +61,15 @@ class SourceRepositoryImplTest {
 
         override suspend fun delete(source: SourceEntity): Int {
             deletedSources.add(element = source)
+            return deleteResult
+        }
+
+        override suspend fun deleteFeedsBySourceId(sourceId: String): Int = 0
+
+        override suspend fun deleteSourceById(id: String): Int = deleteResult
+
+        override suspend fun deleteById(id: String): Int {
+            deletedSourceIds.add(element = id)
             return deleteResult
         }
 
@@ -94,7 +105,7 @@ class SourceRepositoryImplTest {
         val deletedSourceIds = mutableListOf<String>()
         val deletedSourcesBatch = mutableListOf<List<String>>()
         var sourcesToReturn: List<SourceDto> = emptyList()
-        val sourcesFlow = MutableSharedFlow<SourceDto>(replay = 1)
+        val sourcesFlow = MutableSharedFlow<RealtimeSourceEvent>(replay = 1)
         var deleteSourceShouldThrow: Exception? = null
         var deleteSourcesShouldThrow: Exception? = null
 
@@ -105,7 +116,7 @@ class SourceRepositoryImplTest {
 
         override suspend fun getSources(): List<SourceDto> = sourcesToReturn
 
-        override fun observeSources(): Flow<SourceDto> = sourcesFlow
+        override fun observeSources(): Flow<RealtimeSourceEvent> = sourcesFlow
 
         override suspend fun deleteSource(id: String) {
             deleteSourceShouldThrow?.let { throw it }
@@ -275,7 +286,9 @@ class SourceRepositoryImplTest {
             repository.listenToRealtimeSources()
         }
 
-        supabaseDataSource.sourcesFlow.emit(value = remoteDto)
+        supabaseDataSource.sourcesFlow.emit(
+            value = RealtimeSourceEvent.Inserted(source = remoteDto),
+        )
 
         assertEquals(
             expected = 1,
@@ -285,6 +298,31 @@ class SourceRepositoryImplTest {
         assertEquals(
             expected = remoteDto.id,
             actual = entity.id,
+        )
+        job.cancel()
+    }
+
+    @Test
+    fun listenToRealtimeSources_whenDeletedEventReceived_deletesFromDaoById() = runTest(context = UnconfinedTestDispatcher()) {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val sourceId = Uuid.random().toString()
+
+        val job = backgroundScope.launch {
+            repository.listenToRealtimeSources()
+        }
+
+        supabaseDataSource.sourcesFlow.emit(
+            value = RealtimeSourceEvent.Deleted(id = sourceId),
+        )
+
+        assertEquals(
+            expected = listOf(sourceId),
+            actual = dao.deletedSourceIds,
         )
         job.cancel()
     }

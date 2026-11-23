@@ -61,6 +61,9 @@ class KoinGraphTest {
                 override suspend fun insertFeeds(feeds: List<FeedEntity>) = Unit
                 override fun getAll(): Flow<List<SourceEntity>> = emptyFlow()
                 override suspend fun delete(source: SourceEntity): Int = 1
+                override suspend fun deleteFeedsBySourceId(sourceId: String): Int = 0
+                override suspend fun deleteSourceById(id: String): Int = 1
+                override suspend fun deleteById(id: String): Int = 1
                 override suspend fun insertPendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity) = Unit
                 override suspend fun getPendingDeletedSourceIds(): List<String> = emptyList()
                 override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int = 1

@@ -162,6 +162,42 @@ class RssDatabaseTest {
     }
 
     @Test
+    fun deleteById_deletesSourceAndCascadesFeeds() = runTest {
+        val source = SourceEntity(
+            id = "src-del-by-id",
+            rssUrl = "https://example.com/rss-del-id",
+            webUrl = "https://example.com",
+            name = "Test DeleteById",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed = FeedEntity(
+            id = "feed-del-by-id",
+            sourceId = "src-del-by-id",
+            title = "Article DeleteById",
+            content = "Content DeleteById",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/del-by-id",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insertWithFeeds(
+            source = source,
+            feeds = listOf(feed),
+        )
+        assertEquals(expected = 1, actual = sourceDao.getAll().first().size)
+        assertEquals(expected = 1, actual = feedDao.getAll().first().size)
+
+        val rows = sourceDao.deleteById(id = "src-del-by-id")
+
+        assertEquals(expected = 1, actual = rows)
+        assertEquals(expected = 0, actual = sourceDao.getAll().first().size)
+        assertEquals(expected = 0, actual = feedDao.getAll().first().size)
+    }
+
+    @Test
     fun insertWithFeeds_savesSourceAndAssociatedFeeds() = runTest {
         val source = SourceEntity(
             id = "src-2",
