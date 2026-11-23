@@ -52,6 +52,10 @@ class FeedUiMapperTest {
             expected = "<p>Test Content</p>",
             actual = uiModel.content,
         )
+        assertEquals(
+            expected = false,
+            actual = uiModel.isRead,
+        )
     }
 
     @Test

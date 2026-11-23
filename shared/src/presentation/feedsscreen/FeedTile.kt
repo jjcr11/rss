@@ -9,11 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jjcr11.rss.presentation.theme.RssTheme
+
+private const val READ_FEED_ALPHA = 0.5f
 
 @Composable
 fun FeedTile(
@@ -21,12 +24,15 @@ fun FeedTile(
     title: String,
     date: String,
     modifier: Modifier = Modifier,
+    isRead: Boolean = false,
     onClick: () -> Unit = {},
 ) {
+    val alpha = if (isRead) READ_FEED_ALPHA else 1f
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .alpha(alpha = alpha)
             .padding(
                 horizontal = 16.dp,
                 vertical = 12.dp,
@@ -66,6 +72,7 @@ fun FeedTilePreview() {
             sourceName = "MacRumors",
             title = "Apple Silicon M4 Max Benchmarks Reveal Unprecedented Memory Bandwidth Gains",
             date = "Nov 4, 2024",
+            isRead = false,
         )
     }
 }
@@ -80,6 +87,7 @@ fun FeedTileDarkPreview() {
                 sourceName = "MacRumors",
                 title = "Apple Silicon M4 Max Benchmarks Reveal Unprecedented Memory Bandwidth Gains",
                 date = "Nov 4, 2024",
+                isRead = true,
             )
         },
     )

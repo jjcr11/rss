@@ -90,6 +90,7 @@ fun FeedsScreen(
                             sourceName = feed.sourceName,
                             title = feed.title,
                             date = feed.date,
+                            isRead = feed.isRead,
                             onClick = { onFeedClick(feed) },
                         )
                         HorizontalDivider(

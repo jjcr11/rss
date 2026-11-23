@@ -25,6 +25,7 @@ fun Feed.toUiModel(sourceName: String = ""): FeedUiModel = FeedUiModel(
     date = this.date.toDisplayDate(),
     url = this.url,
     content = this.content,
+    isRead = this.isRead,
 )
 
 fun Instant.toDisplayDate(

@@ -7,4 +7,5 @@ data class FeedUiModel(
     val date: String,
     val url: String,
     val content: String = "",
+    val isRead: Boolean = false,
 )
