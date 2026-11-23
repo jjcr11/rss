@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.Uuid
@@ -37,7 +38,7 @@ class FeedDetailViewModel(
 
     private fun observeFeeds() {
         viewModelScope.launch {
-            combine(
+            val feedUiModels = combine(
                 flow = getFeedsUseCase(),
                 flow2 = getSourcesUseCase(),
                 transform = { feeds, sources ->
@@ -48,18 +49,18 @@ class FeedDetailViewModel(
                         )
                     }
                 },
-            ).collect { feedUiModels ->
-                _uiState.update { currentState ->
-                    val calculatedIndex = targetFeedId?.let { id ->
-                        feedUiModels.indexOfFirst { it.id == id }.coerceAtLeast(minimumValue = 0)
-                    } ?: currentState.initialIndex
+            ).first()
 
-                    currentState.copy(
-                        feeds = feedUiModels,
-                        initialIndex = calculatedIndex,
-                        isLoading = false,
-                    )
-                }
+            _uiState.update { currentState ->
+                val calculatedIndex = targetFeedId?.let { id ->
+                    feedUiModels.indexOfFirst { it.id == id }.coerceAtLeast(minimumValue = 0)
+                } ?: currentState.initialIndex
+
+                currentState.copy(
+                    feeds = feedUiModels,
+                    initialIndex = calculatedIndex,
+                    isLoading = false,
+                )
             }
         }
     }
