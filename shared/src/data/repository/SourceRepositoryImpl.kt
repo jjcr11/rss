@@ -1,6 +1,8 @@
 package com.jjcr11.rss.data.repository
 
+import co.touchlab.kermit.Logger
 import com.jjcr11.rss.data.local.dao.SourceDao
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.mapper.toDomain
 import com.jjcr11.rss.data.local.mapper.toEntity
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
@@ -11,6 +13,7 @@ import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.repository.SourceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlin.coroutines.cancellation.CancellationException
 
 class SourceRepositoryImpl(
     private val sourceDao: SourceDao,
@@ -38,14 +41,47 @@ class SourceRepositoryImpl(
     }
 
     override suspend fun syncSources() {
+        val pendingIds = sourceDao.getPendingDeletedSourceIds()
+        if (pendingIds.isNotEmpty()) {
+            supabaseRemoteDataSource.deleteSources(ids = pendingIds)
+            sourceDao.deletePendingDeletedSourcesById(ids = pendingIds)
+        }
+
         val sources = supabaseRemoteDataSource.getSources()
         val sourcesEntity = sources.map { it.toDomain().toEntity() }
-        sourceDao.insert(sourcesEntity)
+        sourceDao.insert(sources = sourcesEntity)
     }
 
     override suspend fun listenToRealtimeSources() {
         supabaseRemoteDataSource.observeSources().collect { source ->
-            sourceDao.insert(source.toDomain().toEntity())
+            sourceDao.insert(source = source.toDomain().toEntity())
         }
+    }
+
+    override suspend fun delete(source: Source): Boolean {
+        val stringId = source.id.toString()
+        val pendingDeletedSource = PendingDeletedSourceEntity(id = stringId)
+        val rowsAffected = sourceDao.deleteLocal(
+            source = source.toEntity(),
+            pendingDeletedSource = pendingDeletedSource,
+        )
+        val isDeleted = rowsAffected > 0
+        if (isDeleted) {
+            try {
+                supabaseRemoteDataSource.deleteSource(id = stringId)
+                sourceDao.deletePendingDeletedSource(pendingDeletedSource = pendingDeletedSource)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.withTag(tag = TAG).w(throwable = e) {
+                    "Failed to delete source in remote, kept in pending: $stringId"
+                }
+            }
+        }
+        return isDeleted
+    }
+
+    private companion object {
+        const val TAG = "SourceRepositoryImpl"
     }
 }

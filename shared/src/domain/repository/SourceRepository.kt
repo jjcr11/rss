@@ -11,4 +11,6 @@ interface SourceRepository {
     suspend fun syncSources()
 
     suspend fun listenToRealtimeSources()
+
+    suspend fun delete(source: Source): Boolean
 }

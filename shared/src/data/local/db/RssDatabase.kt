@@ -7,11 +7,12 @@ import androidx.room.RoomDatabaseConstructor
 import com.jjcr11.rss.data.local.dao.FeedDao
 import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 
 @Database(
-    entities = [SourceEntity::class, FeedEntity::class],
-    version = 5,
+    entities = [SourceEntity::class, FeedEntity::class, PendingDeletedSourceEntity::class],
+    version = 6,
     exportSchema = false,
 )
 @ConstructedBy(RssDatabaseConstructor::class)

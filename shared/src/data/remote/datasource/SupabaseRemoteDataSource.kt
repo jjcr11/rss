@@ -77,6 +77,32 @@ open class SupabaseRemoteDataSource(
             }
     }
 
+    open suspend fun deleteSource(id: String) {
+        supabaseClient
+            .from(table = SOURCES_TABLE)
+            .delete {
+                filter {
+                    eq(
+                        column = "id",
+                        value = id,
+                    )
+                }
+            }
+    }
+
+    open suspend fun deleteSources(ids: List<String>) {
+        supabaseClient
+            .from(table = SOURCES_TABLE)
+            .delete {
+                filter {
+                    isIn(
+                        column = "id",
+                        values = ids,
+                    )
+                }
+            }
+    }
+
     open fun observeSources(): Flow<SourceDto> =
         flow {
             val channel = supabaseClient.channel(channelId = "source-channel")
