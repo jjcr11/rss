@@ -153,4 +153,29 @@ class FeedXmlMapperTest {
             actual = domainFeed.content,
         )
     }
+
+    @Test
+    fun toDomain_whenContentIsBlank_fallsBackToDescription() {
+        val sourceId = Uuid.parse(uuidString = "123e4567-e89b-12d3-a456-426614174000")
+        val fixedFeedId = Uuid.parse(uuidString = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+        val fixedNow = Instant.parse(input = "2026-11-21T15:47:17Z")
+
+        val feedXmlDto = FeedXmlDto(
+            title = "Sample Item",
+            link = "https://example.com/sample",
+            description = "<p>Description fallback</p>",
+            content = "   ",
+        )
+
+        val domainFeed = feedXmlDto.toDomain(
+            sourceId = sourceId,
+            id = fixedFeedId,
+            now = fixedNow,
+        )
+
+        assertEquals(
+            expected = "<p>Description fallback</p>",
+            actual = domainFeed.content,
+        )
+    }
 }

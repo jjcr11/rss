@@ -157,4 +157,34 @@ class RssXmlParserTest {
             actual = feed.content,
         )
     }
+
+    @Test
+    fun parse_whenContentEncodedMissingOrBlank_setsDescriptionAsContent() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Tech Blog</title>
+                    <link>https://example.com/</link>
+                    <item>
+                        <title>Post Title</title>
+                        <link>https://example.com/post-1</link>
+                        <description><![CDATA[<p>Article summary acting as fallback content</p>]]></description>
+                    </item>
+                </channel>
+            </rss>
+        """.trimIndent()
+
+        val source = parser.parse(xml = xml)
+        val feed = source.feeds.first()
+
+        assertEquals(
+            expected = "<p>Article summary acting as fallback content</p>",
+            actual = feed.description,
+        )
+        assertEquals(
+            expected = "<p>Article summary acting as fallback content</p>",
+            actual = feed.content,
+        )
+    }
 }
