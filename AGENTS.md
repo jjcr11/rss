@@ -67,6 +67,10 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 ---
 
 ## Supabase Auth (Memoria de Proyecto)
+- **Persistencia de Preferencias (DataStore):**
+  - Implementado `androidx.datastore:datastore-preferences` con soporte multiplataforma (Android, JVM Desktop e iOS) mediante `PreferenceDataStoreFactory.createWithPath`.
+  - Configurado `preferencesModule` en Koin inyectando `DataStore<Preferences>` y `UserPreferencesDataSource`.
+  - Creados `PreferencesRepository` / `PreferencesRepositoryImpl` y los casos de uso `ObserveGuestModeUseCase` y `SetGuestModeUseCase` para consultar y mutar `isGuestMode`.
 - **Autenticación Opcional (Modo Invitado vs Registrado):**
   - **Estado Actual:** El botón y flujo de Modo Invitado ("Continuar sin cuenta" en `AuthScreen` y `RssNavHost`) se encuentran temporalmente comentados para concentrar los esfuerzos y estabilizar primero el flujo de autenticación por correo/contraseña y la sincronización en la nube.
   - **Pendiente para el Futuro (Modo Invitado):** Rehabilitar el Modo Invitado permitiendo al usuario saltarse el login y utilizar la app de forma 100% local (usando Room como almacenamiento exclusivo sin interactuar con Supabase), persistir la preferencia de `isGuestMode` junto a la pantalla de Splash Screen, y contemplar la posterior migración de datos locales a Supabase si el usuario decide crear una cuenta más adelante.
