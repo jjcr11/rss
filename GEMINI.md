@@ -81,5 +81,14 @@ Cuando el usuario solicite realizar un commit o preparar commits:
 - **Estado Actual:** El botón para iniciar sesión con Google en `AuthScreen` se encuentra temporalmente comentado para enfocar y estabilizar primero el flujo de registro por correo/contraseña y modo invitado.
 - **Pendiente para el Futuro:** Implementar la integración de Google Sign-In con Supabase Auth (flujo OAuth / Credential Manager según la plataforma) y rehabilitar el botón en `AuthScreen`.
 
+---
+
+## Visualización y Estado de Lectura de Feeds (Memoria de Proyecto)
+- **Estado Actual:**
+  1. `SupabaseRemoteDataSource.getUnreadFeeds()` consulta únicamente feeds con `is_read = false` desde Supabase.
+  2. `FeedDetailViewModel` toma una instantánea estática fija (`.first()`) al entrar a la pantalla de detalle para evitar que el `HorizontalPager` pierda artículos o salte al marcarlos como leídos durante el deslizamiento.
+  3. `FeedsViewModel` mantiene los feeds leídos visibles durante la sesión activa: al inicializarse oculta los leídos previos (`initiallyHiddenFeedIds`), pero los artículos que se leen en la sesión actual permanecen en la lista con `isRead = true`.
+  4. `FeedTile` aplica una atenuación visual (`alpha = 0.5f`) a los feeds con `isRead = true`.
+
 
 
