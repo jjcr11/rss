@@ -12,6 +12,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 open class SupabaseRemoteDataSource(
     private val supabaseClient: SupabaseClient,
@@ -103,16 +105,26 @@ open class SupabaseRemoteDataSource(
             }
     }
 
-    open fun observeSources(): Flow<SourceDto> =
+    open fun observeSources(): Flow<RealtimeSourceEvent> =
         flow {
             val channel = supabaseClient.channel(channelId = "source-channel")
-            val actionFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
-                table = SOURCES_TABLE
-            }
+            val actionFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") { table = SOURCES_TABLE }
             channel.subscribe()
             try {
                 actionFlow.collect { action ->
-                    emit(action.decodeRecord<SourceDto>())
+                    when (action) {
+                        is PostgresAction.Delete -> {
+                            val id = action.oldRecord["id"]?.jsonPrimitive?.contentOrNull
+                            if (id != null) {
+                                emit(RealtimeSourceEvent.Deleted(id = id))
+                            }
+                        }
+                        is PostgresAction.Insert -> {
+                            val source = action.decodeRecord<SourceDto>()
+                            emit(RealtimeSourceEvent.Inserted(source = source))
+                        }
+                        else -> {}
+                    }
                 }
             } finally {
                 withContext(context = NonCancellable) {
@@ -129,4 +141,10 @@ open class SupabaseRemoteDataSource(
         const val SOURCES_TABLE = "sources"
         const val FEEDS_TABLE = "feeds"
     }
+}
+
+
+sealed interface RealtimeSourceEvent {
+    data class Inserted(val source: SourceDto) : RealtimeSourceEvent
+    data class Deleted(val id: String) : RealtimeSourceEvent
 }

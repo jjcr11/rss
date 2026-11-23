@@ -34,6 +34,18 @@ interface SourceDao {
     @Delete
     suspend fun delete(source: SourceEntity): Int
 
+    @Query("DELETE FROM feeds WHERE source_id = :sourceId")
+    suspend fun deleteFeedsBySourceId(sourceId: String): Int
+
+    @Query("DELETE FROM sources WHERE id = :id")
+    suspend fun deleteSourceById(id: String): Int
+
+    @Transaction
+    suspend fun deleteById(id: String): Int {
+        deleteFeedsBySourceId(sourceId = id)
+        return deleteSourceById(id = id)
+    }
+
     @Insert
     suspend fun insertPendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity)
 
@@ -42,8 +54,9 @@ interface SourceDao {
         source: SourceEntity,
         pendingDeletedSource: PendingDeletedSourceEntity,
     ): Int {
-        insertPendingDeletedSource(pendingDeletedSource)
-        return delete(source)
+        insertPendingDeletedSource(pendingDeletedSource = pendingDeletedSource)
+        deleteFeedsBySourceId(sourceId = source.id)
+        return delete(source = source)
     }
 
     @Query("SELECT id FROM pending_deleted_sources")

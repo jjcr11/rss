@@ -5,6 +5,7 @@ import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.mapper.toDomain
 import com.jjcr11.rss.data.local.mapper.toEntity
+import com.jjcr11.rss.data.remote.datasource.RealtimeSourceEvent
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
 import com.jjcr11.rss.data.remote.mapper.toDomain
@@ -53,8 +54,15 @@ class SourceRepositoryImpl(
     }
 
     override suspend fun listenToRealtimeSources() {
-        supabaseRemoteDataSource.observeSources().collect { source ->
-            sourceDao.insert(source = source.toDomain().toEntity())
+        supabaseRemoteDataSource.observeSources().collect { event ->
+            when (event) {
+                is RealtimeSourceEvent.Inserted -> {
+                    sourceDao.insert(source = event.source.toDomain().toEntity())
+                }
+                is RealtimeSourceEvent.Deleted -> {
+                    sourceDao.deleteById(id = event.id)
+                }
+            }
         }
     }
 
