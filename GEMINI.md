@@ -96,6 +96,7 @@ Cuando el usuario solicite realizar un commit o preparar commits:
   2. `FeedDetailViewModel` toma una instantánea estática fija (`.first()`) al entrar a la pantalla de detalle para evitar que el `HorizontalPager` pierda artículos o salte al marcarlos como leídos durante el deslizamiento.
   3. `FeedsViewModel` mantiene los feeds leídos visibles durante la sesión activa: al inicializarse oculta los leídos previos (`initiallyHiddenFeedIds`), pero los artículos que se leen en la sesión actual permanecen en la lista con `isRead = true`.
   4. `FeedTile` aplica una atenuación visual (`alpha = 0.5f`) a los feeds con `isRead = true`.
+  5. **Purga de Feeds Leídos Obsoletos:** En `fetchFeedsFromSources()` al arrancar la app, se consultan los feeds con `is_read = true` de cada fuente (`feedDao.getReadFeedsBySourceId`). Aquellos cuyas URLs ya no están presentes en el XML actual del RSS (`currentXmlUrls`) se eliminan en lote de Room (`feedDao.deleteByIds`) y de Supabase (`supabaseRemoteDataSource.deleteFeeds`), impidiendo el crecimiento indefinido de la base de datos y garantizando que no se reinserten.
 
 
 
