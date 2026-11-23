@@ -8,7 +8,9 @@ import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.ObserveGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SetFeedAsReadUseCase
+import com.jjcr11.rss.domain.usecase.SetGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SignInUseCase
 import com.jjcr11.rss.domain.usecase.SignUpUseCase
 import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
@@ -78,6 +80,16 @@ val useCaseModule = module {
     }
     factory {
         SetFeedAsReadUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        ObserveGuestModeUseCase(
+            repository = get(),
+        )
+    }
+    factory {
+        SetGuestModeUseCase(
             repository = get(),
         )
     }
