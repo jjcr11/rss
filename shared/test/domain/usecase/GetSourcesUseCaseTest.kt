@@ -29,6 +29,8 @@ class GetSourcesUseCaseTest {
         }
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     @Test

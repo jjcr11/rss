@@ -2,12 +2,14 @@ package com.jjcr11.rss.data.repository
 
 import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.SupabaseRemoteDataSource
 import com.jjcr11.rss.data.remote.dto.FeedDto
 import com.jjcr11.rss.data.remote.dto.SourceDto
 import com.jjcr11.rss.data.remote.parser.RssXmlParser
+import com.jjcr11.rss.domain.model.Source
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.ktor.client.HttpClient
@@ -26,6 +28,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -35,7 +38,10 @@ class SourceRepositoryImplTest {
     private class FakeSourceDao : SourceDao {
         val insertedSources = mutableListOf<SourceEntity>()
         val insertedFeeds = mutableListOf<FeedEntity>()
+        val deletedSources = mutableListOf<SourceEntity>()
+        val pendingDeletedSources = mutableListOf<PendingDeletedSourceEntity>()
         var sourcesFlow: Flow<List<SourceEntity>> = flowOf(emptyList())
+        var deleteResult: Int = 1
 
         override suspend fun insert(source: SourceEntity) {
             insertedSources.add(element = source)
@@ -50,6 +56,29 @@ class SourceRepositoryImplTest {
         }
 
         override fun getAll(): Flow<List<SourceEntity>> = sourcesFlow
+
+        override suspend fun delete(source: SourceEntity): Int {
+            deletedSources.add(element = source)
+            return deleteResult
+        }
+
+        override suspend fun insertPendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity) {
+            pendingDeletedSources.add(element = pendingDeletedSource)
+        }
+
+        override suspend fun getPendingDeletedSourceIds(): List<String> =
+            pendingDeletedSources.map { it.id }
+
+        override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int {
+            val removed = pendingDeletedSources.removeAll { it.id == pendingDeletedSource.id }
+            return if (removed) 1 else 0
+        }
+
+        override suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int {
+            val count = pendingDeletedSources.count { it.id in ids }
+            pendingDeletedSources.removeAll { it.id in ids }
+            return count
+        }
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(
@@ -62,8 +91,12 @@ class SourceRepositoryImplTest {
     ) {
         val insertedSources = mutableListOf<SourceDto>()
         val insertedFeeds = mutableListOf<FeedDto>()
+        val deletedSourceIds = mutableListOf<String>()
+        val deletedSourcesBatch = mutableListOf<List<String>>()
         var sourcesToReturn: List<SourceDto> = emptyList()
         val sourcesFlow = MutableSharedFlow<SourceDto>(replay = 1)
+        var deleteSourceShouldThrow: Exception? = null
+        var deleteSourcesShouldThrow: Exception? = null
 
         override suspend fun insertSourceWithFeeds(source: SourceDto, feeds: List<FeedDto>) {
             insertedSources.add(element = source)
@@ -73,6 +106,16 @@ class SourceRepositoryImplTest {
         override suspend fun getSources(): List<SourceDto> = sourcesToReturn
 
         override fun observeSources(): Flow<SourceDto> = sourcesFlow
+
+        override suspend fun deleteSource(id: String) {
+            deleteSourceShouldThrow?.let { throw it }
+            deletedSourceIds.add(element = id)
+        }
+
+        override suspend fun deleteSources(ids: List<String>) {
+            deleteSourcesShouldThrow?.let { throw it }
+            deletedSourcesBatch.add(element = ids)
+        }
     }
 
     private fun createRepository(
@@ -285,6 +328,107 @@ class SourceRepositoryImplTest {
             expected = "Test Feed",
             actual = domain.name,
         )
+    }
+
+    @Test
+    fun delete_whenSuccessful_deletesLocalAndRemoteAndCleansPending() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val id = Uuid.random()
+        val now = Clock.System.now()
+        val source = Source(
+            id = id,
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test Source",
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        val result = repository.delete(source = source)
+
+        assertTrue(actual = result)
+        assertEquals(
+            expected = 1,
+            actual = dao.deletedSources.size,
+        )
+        assertEquals(
+            expected = id.toString(),
+            actual = dao.deletedSources.first().id,
+        )
+        assertEquals(
+            expected = listOf(id.toString()),
+            actual = supabaseDataSource.deletedSourceIds,
+        )
+        assertTrue(actual = dao.pendingDeletedSources.isEmpty())
+    }
+
+    @Test
+    fun delete_whenRemoteFails_deletesLocalAndKeepsInPending() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        supabaseDataSource.deleteSourceShouldThrow = RuntimeException("Network offline")
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val id = Uuid.random()
+        val now = Clock.System.now()
+        val source = Source(
+            id = id,
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Test Source",
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        val result = repository.delete(source = source)
+
+        assertTrue(actual = result)
+        assertEquals(
+            expected = 1,
+            actual = dao.deletedSources.size,
+        )
+        assertEquals(
+            expected = 1,
+            actual = dao.pendingDeletedSources.size,
+        )
+        assertEquals(
+            expected = id.toString(),
+            actual = dao.pendingDeletedSources.first().id,
+        )
+        assertTrue(actual = supabaseDataSource.deletedSourceIds.isEmpty())
+    }
+
+    @Test
+    fun syncSources_whenPendingDeletedSourcesExist_deletesThemFromRemoteAndDao() = runTest {
+        val dao = FakeSourceDao()
+        val supabaseDataSource = FakeSupabaseRemoteDataSource()
+        val repository = createRepository(
+            dao = dao,
+            supabaseDataSource = supabaseDataSource,
+        )
+        val pending1 = PendingDeletedSourceEntity(id = "src-del-1")
+        val pending2 = PendingDeletedSourceEntity(id = "src-del-2")
+        dao.insertPendingDeletedSource(pendingDeletedSource = pending1)
+        dao.insertPendingDeletedSource(pendingDeletedSource = pending2)
+
+        repository.syncSources()
+
+        assertEquals(
+            expected = 1,
+            actual = supabaseDataSource.deletedSourcesBatch.size,
+        )
+        assertEquals(
+            expected = listOf("src-del-1", "src-del-2"),
+            actual = supabaseDataSource.deletedSourcesBatch.first(),
+        )
+        assertTrue(actual = dao.pendingDeletedSources.isEmpty())
     }
 
     private val wordPressRssXml = """

@@ -49,6 +49,8 @@ class FeedsViewModelTest {
         override suspend fun listenToRealtimeSources() = Unit
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     private lateinit var feedRepository: FakeFeedRepository

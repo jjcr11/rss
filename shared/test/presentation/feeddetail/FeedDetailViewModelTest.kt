@@ -60,6 +60,8 @@ class FeedDetailViewModelTest {
         override suspend fun listenToRealtimeSources() {
             throw NotImplementedError()
         }
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     private lateinit var feedRepository: FakeFeedRepository

@@ -30,6 +30,8 @@ class SyncManagerImplTest {
         override suspend fun listenToRealtimeSources() = Unit
 
         override fun getAll(): Flow<List<Source>> = flowOf(value = emptyList())
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     private class FakeFeedRepository : FeedRepository {

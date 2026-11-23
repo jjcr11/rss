@@ -26,6 +26,8 @@ class SyncSourcesUseCaseTest {
         }
 
         override fun getAll(): Flow<List<Source>> = flowOf(emptyList())
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     @Test

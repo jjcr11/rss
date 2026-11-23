@@ -5,6 +5,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.jjcr11.rss.data.local.dao.FeedDao
 import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -77,6 +78,87 @@ class RssDatabaseTest {
         val sources = sourceDao.getAll().first()
         assertEquals(expected = 1, actual = sources.size)
         assertEquals(expected = "src-dup-1", actual = sources.first().id)
+    }
+
+    @Test
+    fun deleteLocal_insertsIntoPendingDeletedSourcesAndDeletesSource() = runTest {
+        val source = SourceEntity(
+            id = "src-del-local",
+            rssUrl = "https://example.com/rss-del",
+            webUrl = "https://example.com",
+            name = "Test Delete",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insert(source = source)
+        assertEquals(expected = 1, actual = sourceDao.getAll().first().size)
+
+        val pending = PendingDeletedSourceEntity(id = "src-del-local")
+        val rows = sourceDao.deleteLocal(
+            source = source,
+            pendingDeletedSource = pending,
+        )
+
+        assertEquals(expected = 1, actual = rows)
+        assertEquals(expected = 0, actual = sourceDao.getAll().first().size)
+        assertEquals(
+            expected = listOf("src-del-local"),
+            actual = sourceDao.getPendingDeletedSourceIds(),
+        )
+    }
+
+    @Test
+    fun deletePendingDeletedSourcesById_removesMatchingIds() = runTest {
+        val pending1 = PendingDeletedSourceEntity(id = "p-1")
+        val pending2 = PendingDeletedSourceEntity(id = "p-2")
+        sourceDao.insertPendingDeletedSource(pendingDeletedSource = pending1)
+        sourceDao.insertPendingDeletedSource(pendingDeletedSource = pending2)
+
+        assertEquals(
+            expected = listOf("p-1", "p-2"),
+            actual = sourceDao.getPendingDeletedSourceIds(),
+        )
+
+        sourceDao.deletePendingDeletedSourcesById(ids = listOf("p-1"))
+
+        assertEquals(
+            expected = listOf("p-2"),
+            actual = sourceDao.getPendingDeletedSourceIds(),
+        )
+    }
+
+    @Test
+    fun deleteSource_cascadesAndDeletesAssociatedFeeds() = runTest {
+        val source = SourceEntity(
+            id = "src-cascade",
+            rssUrl = "https://example.com/rss-cascade",
+            webUrl = "https://example.com",
+            name = "Test Cascade",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed = FeedEntity(
+            id = "feed-cascade-1",
+            sourceId = "src-cascade",
+            title = "Article Cascade",
+            content = "Content Cascade",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/cascade-1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insertWithFeeds(
+            source = source,
+            feeds = listOf(feed),
+        )
+        assertEquals(expected = 1, actual = feedDao.getAll().first().size)
+
+        sourceDao.delete(source = source)
+
+        assertEquals(expected = 0, actual = sourceDao.getAll().first().size)
+        assertEquals(expected = 0, actual = feedDao.getAll().first().size)
     }
 
     @Test

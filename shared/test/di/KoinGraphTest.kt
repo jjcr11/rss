@@ -3,6 +3,7 @@ package com.jjcr11.rss.di
 import com.jjcr11.rss.data.local.dao.FeedDao
 import com.jjcr11.rss.data.local.dao.SourceDao
 import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
 import com.jjcr11.rss.data.local.entity.SourceEntity
 import com.jjcr11.rss.data.remote.datasource.AuthRemoteDataSource
 import com.jjcr11.rss.data.remote.datasource.RssRemoteDataSource
@@ -58,6 +59,11 @@ class KoinGraphTest {
                 override suspend fun insert(sources: List<SourceEntity>) = Unit
                 override suspend fun insertFeeds(feeds: List<FeedEntity>) = Unit
                 override fun getAll(): Flow<List<SourceEntity>> = emptyFlow()
+                override suspend fun delete(source: SourceEntity): Int = 1
+                override suspend fun insertPendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity) = Unit
+                override suspend fun getPendingDeletedSourceIds(): List<String> = emptyList()
+                override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int = 1
+                override suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int = ids.size
             }
         }
         single<FeedDao> {

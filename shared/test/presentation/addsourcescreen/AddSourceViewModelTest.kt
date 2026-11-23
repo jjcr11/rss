@@ -58,6 +58,8 @@ class AddSourceViewModelTest {
         }
 
         override fun getAll(): Flow<List<Source>> = sourcesFlow
+
+        override suspend fun delete(source: Source): Boolean = true
     }
 
     private lateinit var repository: FakeSourceRepository
