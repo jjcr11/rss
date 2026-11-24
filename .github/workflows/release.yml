@@ -22,6 +22,16 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Extract version from tag
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.1.0"
+          fi
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Create local.properties
         run: |
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> local.properties
@@ -47,9 +57,10 @@ jobs:
           jpackage \
             --input build/tasks/_desktopApp_executableJarJvm \
             --name "rss-app" \
+            --app-version "${{ env.APP_VERSION }}" \
             --main-jar desktopApp-jvm-executable.jar \
-            --main-class com.jjcr11.rss.MainKt \
             --type deb \
+            --linux-shortcut \
             --dest artifacts
 
       - name: Upload Linux & Android Artifacts
@@ -70,6 +81,16 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Extract version from tag
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.1.0"
+          fi
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Create local.properties
         shell: bash
         run: |
@@ -86,9 +107,11 @@ jobs:
           jpackage \
             --input build/tasks/_desktopApp_executableJarJvm \
             --name "RssApp" \
+            --app-version "${{ env.APP_VERSION }}" \
             --main-jar desktopApp-jvm-executable.jar \
-            --main-class com.jjcr11.rss.MainKt \
             --type exe \
+            --win-shortcut \
+            --win-menu \
             --dest artifacts
 
       - name: Upload Windows Artifacts
@@ -109,6 +132,16 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Extract version from tag
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.1.0"
+          fi
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Create local.properties
         run: |
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> local.properties
@@ -126,8 +159,8 @@ jobs:
           jpackage \
             --input build/tasks/_desktopApp_executableJarJvm \
             --name "RssApp" \
+            --app-version "${{ env.APP_VERSION }}" \
             --main-jar desktopApp-jvm-executable.jar \
-            --main-class com.jjcr11.rss.MainKt \
             --type dmg \
             --dest artifacts
 
