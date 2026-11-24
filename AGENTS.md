@@ -102,5 +102,16 @@ Cuando el usuario solicite realizar un commit o preparar commits:
   4. `FeedTile` aplica una atenuación visual (`alpha = 0.5f`) a los feeds con `isRead = true`.
   5. **Purga de Feeds Leídos Obsoletos:** En `fetchFeedsFromSources()` al arrancar la app, se consultan los feeds con `is_read = true` de cada fuente (`feedDao.getReadFeedsBySourceId`). Aquellos cuyas URLs ya no están presentes en el XML actual del RSS (`currentXmlUrls`) se eliminan en lote de Room (`feedDao.deleteByIds`) y de Supabase (`supabaseRemoteDataSource.deleteFeeds`), impidiendo el crecimiento indefinido de la base de datos y garantizando que no se reinserten.
 
+---
+
+## Ajustes y Cierre de Sesión / Logout (Memoria de Proyecto)
+- **Estado Actual:**
+  1. `SettingsScreen` accesible desde el icono de engranaje en la barra superior de `FeedsScreen`.
+  2. Implementado botón de cierre de sesión gestionado por `SettingsViewModel` y `LogoutUseCase`.
+  3. `AuthRepositoryImpl.logout()`: Realiza el cierre de sesión remoto en Supabase (`authRemoteDataSource.signOut()`) y purga de forma completa la persistencia local:
+     - Room: Elimina en una sola transacción todas las fuentes, feeds y fuentes pendientes de borrado (`SourceDao.clearAll()`).
+     - DataStore: Restablece las preferencias de usuario (`userPreferencesDataSource.clear()`), desactivando también `isGuestMode`.
+  4. Al completarse el cierre de sesión, `RssNavHost` navega a `Screen.Auth`, limpiando el back stack.
+
 
 
