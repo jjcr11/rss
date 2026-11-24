@@ -94,7 +94,7 @@ jobs:
           name: windows-packages
           path: artifacts/*
 
-  build-macos-and-ios:
+  build-macos:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
@@ -128,13 +128,8 @@ jobs:
             --type dmg \
             --dest artifacts
 
-      - name: Package iOS IPA
-        run: |
-          ./kotlin package -m iosApp -f ipa
-          find build/ -name "*.ipa" -exec cp {} artifacts/rss-app.ipa \; || echo "No IPA or unsigned build in build/"
-
-      - name: Upload macOS & iOS Artifacts
+      - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-ios-packages
+          name: macos-packages
           path: artifacts/*
