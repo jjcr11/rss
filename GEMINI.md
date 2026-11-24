@@ -42,6 +42,8 @@ Cuando el usuario solicite realizar un commit o preparar commits:
      - Mensajes exclusivamente en inglés y formato Conventional Commits (`feat`, `fix`, `refactor`, `chore`, etc.).
      - Scope automático para archivos dentro de `apps/` si aplica.
      - Sin trailers ni atribuciones (`Co-authored-by`, etc.).
+4. **PROHIBICIÓN ESTRICTA DE PUSH (JAMÁS HACER PUSH):**
+   - **Bajo ninguna circunstancia debes ejecutar `git push`.** Queda total y terminantemente prohibido hacer push al repositorio remoto. La acción de push queda delegada única y exclusivamente al programador humano de forma manual.
 
 ---
 
