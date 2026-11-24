@@ -1,4 +1,4 @@
-package com.jjcr11.rss.data.manager
+package com.jjcr11.rss.domain.manager
 
 import com.jjcr11.rss.domain.model.Feed
 import com.jjcr11.rss.domain.model.Source
@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.uuid.Uuid
 
-class SyncManagerImplTest {
+class SyncManagerTest {
 
     private class FakeSourceRepository : SourceRepository {
         var syncSourcesCalled = false
@@ -58,7 +58,7 @@ class SyncManagerImplTest {
     fun sync_callsBothSyncSourcesAndSyncFeeds() = runTest {
         val sourceRepository = FakeSourceRepository()
         val feedRepository = FakeFeedRepository()
-        val syncManager = SyncManagerImpl(
+        val syncManager = SyncManager(
             syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository),
             syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository),
         )
@@ -80,7 +80,7 @@ class SyncManagerImplTest {
     fun sync_whenFetchFeedsFromSourcesProvided_callsIt() = runTest {
         val sourceRepository = FakeSourceRepository()
         val feedRepository = FakeFeedRepository()
-        val syncManager = SyncManagerImpl(
+        val syncManager = SyncManager(
             syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository),
             syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository),
             fetchFeedsFromSourcesUseCase = FetchFeedsFromSourcesUseCase(repository = feedRepository),
@@ -109,7 +109,7 @@ class SyncManagerImplTest {
             syncShouldThrow = RuntimeException("Network error")
         }
         val feedRepository = FakeFeedRepository()
-        val syncManager = SyncManagerImpl(
+        val syncManager = SyncManager(
             syncSourcesUseCase = SyncSourcesUseCase(repository = sourceRepository),
             syncFeedsUseCase = SyncFeedsUseCase(repository = feedRepository),
         )

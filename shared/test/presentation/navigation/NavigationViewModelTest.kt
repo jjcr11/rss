@@ -2,14 +2,22 @@ package com.jjcr11.rss.presentation.navigation
 
 import com.jjcr11.rss.domain.manager.SyncManager
 import com.jjcr11.rss.domain.model.AuthState
+import com.jjcr11.rss.domain.model.Feed
+import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.model.User
 import com.jjcr11.rss.domain.repository.AuthRepository
+import com.jjcr11.rss.domain.repository.FeedRepository
+import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
+import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -44,7 +52,25 @@ class NavigationViewModelTest {
         }
     }
 
-    private class FakeSyncManager : SyncManager {
+    private class FakeSourceRepository : SourceRepository {
+        override suspend fun fetchAndSave(url: String): Source = throw NotImplementedError()
+        override suspend fun syncSources() = Unit
+        override suspend fun listenToRealtimeSources() = Unit
+        override fun getAll(): Flow<List<Source>> = flowOf(value = emptyList())
+        override suspend fun delete(source: Source): Boolean = true
+    }
+
+    private class FakeFeedRepository : FeedRepository {
+        override fun getAll(): Flow<List<Feed>> = flowOf(value = emptyList())
+        override suspend fun syncFeeds() = Unit
+        override suspend fun setAsRead(id: Uuid) = Unit
+        override suspend fun fetchFeedsFromSources() = Unit
+    }
+
+    private class FakeSyncManager : SyncManager(
+        syncSourcesUseCase = SyncSourcesUseCase(repository = FakeSourceRepository()),
+        syncFeedsUseCase = SyncFeedsUseCase(repository = FakeFeedRepository()),
+    ) {
         var syncCalled = false
         private val _isSyncing = MutableStateFlow(value = false)
         override val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()

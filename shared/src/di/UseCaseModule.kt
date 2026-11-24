@@ -1,5 +1,6 @@
 package com.jjcr11.rss.di
 
+import com.jjcr11.rss.domain.manager.SyncManager
 import com.jjcr11.rss.domain.usecase.AddSourceUseCase
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
 import com.jjcr11.rss.domain.usecase.DeleteSourceUseCase
@@ -91,6 +92,13 @@ val useCaseModule = module {
     factory {
         SetGuestModeUseCase(
             repository = get(),
+        )
+    }
+    single {
+        SyncManager(
+            syncSourcesUseCase = get(),
+            syncFeedsUseCase = get(),
+            fetchFeedsFromSourcesUseCase = get(),
         )
     }
 }
