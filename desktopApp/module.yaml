@@ -10,6 +10,7 @@ dependencies:
 settings:
   compose: enabled
   jvm:
+    release: 21
     mainClass: com.jjcr11.rss.MainKt
   publishing:
     version: "0.1.0"

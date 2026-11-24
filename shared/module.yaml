@@ -82,6 +82,8 @@ settings:
       packageName: com.jjcr11.rss.resources
       # Generate public accessors so other modules (and previews) can use Res.*
       exposedAccessors: true
+  jvm:
+    release: 21
   kotlin:
     serialization: enabled
     freeCompilerArgs:
