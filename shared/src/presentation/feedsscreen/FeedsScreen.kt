@@ -20,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jjcr11.rss.presentation.components.AddIcon
+import com.jjcr11.rss.presentation.components.SettingsIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
 import com.jjcr11.rss.resources.Res
 import com.jjcr11.rss.resources.add_feed_action
 import com.jjcr11.rss.resources.feeds_title
+import com.jjcr11.rss.resources.settings_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -32,6 +34,7 @@ fun FeedsRoute(
     modifier: Modifier = Modifier,
     viewModel: FeedsViewModel = koinViewModel(),
     onAddFeedClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     onFeedClick: (FeedUiModel) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -40,6 +43,7 @@ fun FeedsRoute(
         modifier = modifier,
         uiState = uiState,
         onAddFeedClick = onAddFeedClick,
+        onSettingsClick = onSettingsClick,
         onFeedClick = onFeedClick,
     )
 }
@@ -49,6 +53,7 @@ fun FeedsScreen(
     modifier: Modifier = Modifier,
     uiState: FeedsUiState = FeedsUiState(),
     onAddFeedClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     onFeedClick: (FeedUiModel) -> Unit = {},
 ) {
     Scaffold(
@@ -63,6 +68,12 @@ fun FeedsScreen(
                         Icon(
                             imageVector = AddIcon,
                             contentDescription = stringResource(resource = Res.string.add_feed_action),
+                        )
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = SettingsIcon,
+                            contentDescription = stringResource(resource = Res.string.settings_title),
                         )
                     }
                 },

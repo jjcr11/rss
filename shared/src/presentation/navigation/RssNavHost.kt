@@ -21,6 +21,7 @@ import com.jjcr11.rss.presentation.addsourcescreen.AddSourceRoute
 import com.jjcr11.rss.presentation.authscreen.AuthRoute
 import com.jjcr11.rss.presentation.feeddetail.FeedDetailRoute
 import com.jjcr11.rss.presentation.feedsscreen.FeedsRoute
+import com.jjcr11.rss.presentation.settingsscreen.SettingsRoute
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -80,6 +81,9 @@ fun RssNavHost(
                     onAddFeedClick = {
                         navController.navigate(route = Screen.AddSource.route)
                     },
+                    onSettingsClick = {
+                        navController.navigate(route = Screen.Settings.route)
+                    },
                     onFeedClick = { feed ->
                         navController.currentBackStackEntry?.savedStateHandle?.set(
                             key = "feed_id",
@@ -104,6 +108,20 @@ fun RssNavHost(
                     feedId = feedId,
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                )
+            }
+            composable(route = Screen.Settings.route) {
+                SettingsRoute(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onLogoutSuccess = {
+                        navController.navigate(route = Screen.Auth.route) {
+                            popUpTo(route = Screen.Feeds.route) {
+                                inclusive = true
+                            }
+                        }
                     },
                 )
             }

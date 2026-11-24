@@ -25,6 +25,7 @@ import com.jjcr11.rss.domain.usecase.FetchFeedsFromSourcesUseCase
 import com.jjcr11.rss.domain.usecase.GetFeedsUseCase
 import com.jjcr11.rss.domain.usecase.GetSourcesUseCase
 import com.jjcr11.rss.domain.usecase.ListenToRealtimeSourcesUseCase
+import com.jjcr11.rss.domain.usecase.LogoutUseCase
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
 import com.jjcr11.rss.domain.usecase.ObserveGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SetFeedAsReadUseCase
@@ -38,6 +39,7 @@ import com.jjcr11.rss.presentation.authscreen.AuthViewModel
 import com.jjcr11.rss.presentation.feeddetail.FeedDetailViewModel
 import com.jjcr11.rss.presentation.feedsscreen.FeedsViewModel
 import com.jjcr11.rss.presentation.navigation.NavigationViewModel
+import com.jjcr11.rss.presentation.settingsscreen.SettingsViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.SessionManager
 import io.github.jan.supabase.auth.auth
@@ -77,6 +79,10 @@ class KoinGraphTest {
                 override suspend fun getPendingDeletedSourceIds(): List<String> = emptyList()
                 override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int = 1
                 override suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int = ids.size
+                override suspend fun deleteAll(): Int = 0
+                override suspend fun deleteAllPendingDeleted(): Int = 0
+                override suspend fun deleteAllFeeds(): Int = 0
+                override suspend fun clearAll() = Unit
             }
         }
         single<FeedDao> {
@@ -176,6 +182,7 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<ObserveAuthStateUseCase>())
         assertNotNull(actual = koin.get<ObserveGuestModeUseCase>())
         assertNotNull(actual = koin.get<SetGuestModeUseCase>())
+        assertNotNull(actual = koin.get<LogoutUseCase>())
 
         // ViewModels
         assertNotNull(actual = koin.get<AddSourceViewModel>())
@@ -183,5 +190,6 @@ class KoinGraphTest {
         assertNotNull(actual = koin.get<FeedDetailViewModel>())
         assertNotNull(actual = koin.get<AuthViewModel>())
         assertNotNull(actual = koin.get<NavigationViewModel>())
+        assertNotNull(actual = koin.get<SettingsViewModel>())
     }
 }

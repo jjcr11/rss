@@ -5,6 +5,7 @@ import com.jjcr11.rss.presentation.authscreen.AuthViewModel
 import com.jjcr11.rss.presentation.feeddetail.FeedDetailViewModel
 import com.jjcr11.rss.presentation.feedsscreen.FeedsViewModel
 import com.jjcr11.rss.presentation.navigation.NavigationViewModel
+import com.jjcr11.rss.presentation.settingsscreen.SettingsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -41,6 +42,11 @@ val presentationModule = module {
             observeAuthStateUseCase = get(),
             syncManager = get(),
             observeGuestModeUseCase = get(),
+        )
+    }
+    viewModel {
+        SettingsViewModel(
+            logoutUseCase = get(),
         )
     }
 }
