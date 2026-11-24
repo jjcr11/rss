@@ -29,6 +29,8 @@ val repositoryModule = module {
     single<AuthRepository> {
         AuthRepositoryImpl(
             authRemoteDataSource = get(),
+            sourceDao = get(),
+            userPreferencesDataSource = get(),
         )
     }
     single<PreferencesRepository> {

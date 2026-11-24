@@ -90,6 +90,12 @@ class SourceRepositoryImplTest {
             pendingDeletedSources.removeAll { it.id in ids }
             return count
         }
+
+        override suspend fun deleteAll(): Int = 0
+
+        override suspend fun deleteAllPendingDeleted(): Int = 0
+
+        override suspend fun deleteAllFeeds(): Int = 0
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(

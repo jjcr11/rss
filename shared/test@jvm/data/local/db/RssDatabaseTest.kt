@@ -574,4 +574,38 @@ class RssDatabaseTest {
             actual = remaining.first().id,
         )
     }
+
+    @Test
+    fun clearAll_deletesAllSourcesFeedsAndPendingDeletedSources() = runTest {
+        val source = SourceEntity(
+            id = "src-clear-1",
+            rssUrl = "https://example.com/rss",
+            webUrl = "https://example.com",
+            name = "Clear Source",
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        val feed = FeedEntity(
+            id = "feed-clear-1",
+            sourceId = "src-clear-1",
+            title = "Clear Feed",
+            content = "Content",
+            isRead = false,
+            isSaved = false,
+            url = "https://example.com/clear-1",
+            date = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L,
+        )
+        sourceDao.insertWithFeeds(source = source, feeds = listOf(feed))
+        sourceDao.insertPendingDeletedSource(
+            pendingDeletedSource = PendingDeletedSourceEntity(id = "src-pending-1"),
+        )
+
+        sourceDao.clearAll()
+
+        assertEquals(expected = 0, actual = sourceDao.getAll().first().size)
+        assertEquals(expected = 0, actual = sourceDao.getPendingDeletedSourceIds().size)
+        assertEquals(expected = 0, actual = feedDao.getAll().first().size)
+    }
 }

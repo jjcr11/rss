@@ -1,5 +1,7 @@
 package com.jjcr11.rss.data.repository
 
+import com.jjcr11.rss.data.local.dao.SourceDao
+import com.jjcr11.rss.data.local.preferences.UserPreferencesDataSource
 import com.jjcr11.rss.data.remote.datasource.AuthRemoteDataSource
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.model.User
@@ -12,6 +14,8 @@ import kotlin.uuid.Uuid
 
 class AuthRepositoryImpl(
     private val authRemoteDataSource: AuthRemoteDataSource,
+    private val sourceDao: SourceDao? = null,
+    private val userPreferencesDataSource: UserPreferencesDataSource? = null,
 ) : AuthRepository {
 
     override val authState: Flow<AuthState> =
@@ -90,5 +94,15 @@ class AuthRepositoryImpl(
         val isAlreadyDesc = e.description?.contains(other = "already registered", ignoreCase = true) == true
         val isAlreadyMsg = e.message?.contains(other = "already registered", ignoreCase = true) == true
         return isUserAlreadyExists || isAlreadyDesc || isAlreadyMsg
+    }
+
+    override suspend fun logout() {
+        try {
+            authRemoteDataSource.signOut()
+        } catch (_: Exception) {
+            // Silently catch network or session errors on remote signout
+        }
+        sourceDao?.clearAll()
+        userPreferencesDataSource?.clear()
     }
 }

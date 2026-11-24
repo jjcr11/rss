@@ -1,5 +1,13 @@
 package com.jjcr11.rss.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import com.jjcr11.rss.data.local.dao.SourceDao
+import com.jjcr11.rss.data.local.entity.FeedEntity
+import com.jjcr11.rss.data.local.entity.PendingDeletedSourceEntity
+import com.jjcr11.rss.data.local.entity.SourceEntity
+import com.jjcr11.rss.data.local.preferences.UserPreferencesDataSource
+import com.jjcr11.rss.data.local.preferences.createDataStore
 import com.jjcr11.rss.data.remote.datasource.AuthRemoteDataSource
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.model.User
@@ -13,12 +21,15 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
@@ -40,6 +51,8 @@ class AuthRepositoryImplTest {
         var signUpThrows: Exception? = null
         var signInCallCount = 0
         var signUpCallCount = 0
+        var signOutCallCount = 0
+        var signOutThrows: Exception? = null
 
         override val sessionStatus = sessionStatusFlow
 
@@ -55,6 +68,11 @@ class AuthRepositoryImplTest {
             signInEmail = email
             signInPassword = password
             signInThrows?.let { throw it }
+        }
+
+        override suspend fun signOut() {
+            signOutCallCount++
+            signOutThrows?.let { throw it }
         }
     }
 
@@ -323,5 +341,75 @@ class AuthRepositoryImplTest {
             expected = AuthState.Unauthenticated,
             actual = state,
         )
+    }
+
+    private class FakeSourceDao : SourceDao {
+        var clearAllCalled = false
+        override suspend fun insert(source: SourceEntity) = Unit
+        override suspend fun insert(sources: List<SourceEntity>) = Unit
+        override suspend fun insertFeeds(feeds: List<FeedEntity>) = Unit
+        override fun getAll(): Flow<List<SourceEntity>> = emptyFlow()
+        override suspend fun delete(source: SourceEntity): Int = 1
+        override suspend fun deleteFeedsBySourceId(sourceId: String): Int = 0
+        override suspend fun deleteSourceById(id: String): Int = 1
+        override suspend fun deleteById(id: String): Int = 1
+        override suspend fun insertPendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity) = Unit
+        override suspend fun getPendingDeletedSourceIds(): List<String> = emptyList()
+        override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int = 1
+        override suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int = ids.size
+        override suspend fun deleteAll(): Int = 0
+        override suspend fun deleteAllPendingDeleted(): Int = 0
+        override suspend fun deleteAllFeeds(): Int = 0
+        override suspend fun clearAll() {
+            clearAllCalled = true
+        }
+    }
+
+    @Test
+    fun logout_signsOutRemoteAndClearsLocalDatabaseAndPreferences() = runTest {
+        val authRemoteDataSource = FakeAuthRemoteDataSource()
+        val sourceDao = FakeSourceDao()
+        val dataStore: DataStore<Preferences> = createDataStore(
+            producePath = { "/tmp/test_pref_${Uuid.random()}.preferences_pb" },
+        )
+        val userPreferencesDataSource = UserPreferencesDataSource(dataStore = dataStore)
+        userPreferencesDataSource.setGuestMode(isGuestMode = true)
+
+        val repository = AuthRepositoryImpl(
+            authRemoteDataSource = authRemoteDataSource,
+            sourceDao = sourceDao,
+            userPreferencesDataSource = userPreferencesDataSource,
+        )
+
+        repository.logout()
+
+        assertEquals(expected = 1, actual = authRemoteDataSource.signOutCallCount)
+        assertTrue(actual = sourceDao.clearAllCalled)
+        assertFalse(actual = userPreferencesDataSource.isGuestMode.first())
+    }
+
+    @Test
+    fun logout_whenRemoteSignOutThrows_stillClearsLocalDatabaseAndPreferences() = runTest {
+        val authRemoteDataSource = FakeAuthRemoteDataSource().apply {
+            signOutThrows = RuntimeException("Network error on logout")
+        }
+        val sourceDao = FakeSourceDao()
+        val dataStore: DataStore<Preferences> = createDataStore(
+            producePath = { "/tmp/test_pref_${Uuid.random()}.preferences_pb" },
+        )
+        val userPreferencesDataSource = UserPreferencesDataSource(dataStore = dataStore)
+        userPreferencesDataSource.setGuestMode(isGuestMode = true)
+
+        val repository = AuthRepositoryImpl(
+            authRemoteDataSource = authRemoteDataSource,
+            sourceDao = sourceDao,
+            userPreferencesDataSource = userPreferencesDataSource,
+        )
+
+        repository.logout()
+
+        assertEquals(expected = 1, actual = authRemoteDataSource.signOutCallCount)
+        assertTrue(actual = sourceDao.clearAllCalled)
+        assertFalse(actual = userPreferencesDataSource.isGuestMode.first())
     }
 }

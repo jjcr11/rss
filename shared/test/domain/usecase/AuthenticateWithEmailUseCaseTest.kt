@@ -28,6 +28,8 @@ class AuthenticateWithEmailUseCaseTest {
             lastEmail = email
             lastPassword = password
         }
+
+        override suspend fun logout() = Unit
     }
 
     @Test

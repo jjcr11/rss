@@ -25,4 +25,8 @@ open class AuthRemoteDataSource(
             this.password = password
         }
     }
+
+    open suspend fun signOut() {
+        supabaseClient.auth.signOut()
+    }
 }

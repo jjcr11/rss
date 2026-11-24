@@ -67,4 +67,20 @@ interface SourceDao {
 
     @Query("DELETE FROM pending_deleted_sources WHERE id in (:ids)")
     suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int
+
+    @Query("DELETE FROM feeds")
+    suspend fun deleteAllFeeds(): Int
+
+    @Query("DELETE FROM sources")
+    suspend fun deleteAll(): Int
+
+    @Query("DELETE FROM pending_deleted_sources")
+    suspend fun deleteAllPendingDeleted(): Int
+
+    @Transaction
+    suspend fun clearAll() {
+        deleteAllFeeds()
+        deleteAll()
+        deleteAllPendingDeleted()
+    }
 }

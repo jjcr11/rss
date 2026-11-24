@@ -96,6 +96,9 @@ class FeedRepositoryImplTest {
         override suspend fun getPendingDeletedSourceIds(): List<String> = emptyList()
         override suspend fun deletePendingDeletedSource(pendingDeletedSource: PendingDeletedSourceEntity): Int = 1
         override suspend fun deletePendingDeletedSourcesById(ids: List<String>): Int = ids.size
+        override suspend fun deleteAll(): Int = 0
+        override suspend fun deleteAllPendingDeleted(): Int = 0
+        override suspend fun deleteAllFeeds(): Int = 0
     }
 
     private class FakeSupabaseRemoteDataSource : SupabaseRemoteDataSource(

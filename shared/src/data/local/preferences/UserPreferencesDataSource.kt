@@ -20,4 +20,10 @@ class UserPreferencesDataSource(
             preferences[isGuestModeKey] = isGuestMode
         }
     }
+
+    suspend fun clear() {
+        dataStore.edit { preferences ->
+            preferences.clear()
+        }
+    }
 }

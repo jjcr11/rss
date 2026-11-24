@@ -48,6 +48,8 @@ class AuthViewModelTest {
             lastPassword = password
             shouldThrow?.let { throw it }
         }
+
+        override suspend fun logout() = Unit
     }
 
     private class FakePreferencesRepository : PreferencesRepository {
