@@ -11,3 +11,5 @@ settings:
   compose: enabled
   jvm:
     mainClass: com.jjcr11.rss.MainKt
+  publishing:
+    version: "0.1.0"
