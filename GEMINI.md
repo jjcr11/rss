@@ -72,8 +72,8 @@ Cuando el usuario solicite realizar un commit o preparar commits:
   - Configurado `preferencesModule` en Koin inyectando `DataStore<Preferences>` y `UserPreferencesDataSource`.
   - Creados `PreferencesRepository` / `PreferencesRepositoryImpl` y los casos de uso `ObserveGuestModeUseCase` y `SetGuestModeUseCase` para consultar y mutar `isGuestMode`.
 - **Autenticación Opcional (Modo Invitado vs Registrado):**
-  - **Estado Actual:** El botón y flujo de Modo Invitado ("Continuar sin cuenta" en `AuthScreen` y `RssNavHost`) se encuentran temporalmente comentados para concentrar los esfuerzos y estabilizar primero el flujo de autenticación por correo/contraseña y la sincronización en la nube.
-  - **Pendiente para el Futuro (Modo Invitado):** Rehabilitar el Modo Invitado permitiendo al usuario saltarse el login y utilizar la app de forma 100% local (usando Room como almacenamiento exclusivo sin interactuar con Supabase), persistir la preferencia de `isGuestMode` junto a la pantalla de Splash Screen, y contemplar la posterior migración de datos locales a Supabase si el usuario decide crear una cuenta más adelante.
+  - **Estado Actual:** El botón y flujo de Modo Invitado ("Continuar sin cuenta") se encuentra habilitado en `AuthScreen` y `RssNavHost`. Al pulsar el botón se persiste `isGuestMode = true` en DataStore mediante `SetGuestModeUseCase`, navegando a `FeedsScreen`. En modo invitado, `SupabaseRemoteDataSource` neutraliza de forma segura las operaciones remotas hacia la nube, funcionando de forma 100% local con Room. Al autenticarse exitosamente con correo/contraseña, `isGuestMode` se restablece a `false`. Al iniciar la app, `NavigationViewModel` evalúa concurrentemente `AuthState` e `isGuestMode`, reteniendo la pantalla de carga hasta resolver el destino correcto (`FeedsScreen` o `AuthScreen`), previniendo parpadeos visuales (*flicker*).
+  - **Pendiente para el Futuro (Modo Invitado):** Contemplar la posterior sincronización o migración de datos locales a Supabase si el usuario decide registrarse con una cuenta más adelante.
 
 ---
 
