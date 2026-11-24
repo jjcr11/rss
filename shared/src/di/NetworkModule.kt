@@ -40,6 +40,7 @@ val networkModule = module {
     single {
         SupabaseRemoteDataSource(
             supabaseClient = get(),
+            userPreferencesDataSource = get(),
         )
     }
     single {
