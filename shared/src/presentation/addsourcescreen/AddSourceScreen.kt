@@ -3,6 +3,7 @@ package com.jjcr11.rss.presentation.addsourcescreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -23,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -71,8 +74,6 @@ fun AddSourceScreen(
     onDeleteSourceClick: (SourceUiModel) -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
-    var url by remember { mutableStateOf(value = "") }
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -91,90 +92,161 @@ fun AddSourceScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        AddSourceContent(
+            uiState = uiState,
+            onAddFeedClick = onAddFeedClick,
+            onDeleteSourceClick = onDeleteSourceClick,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues = innerPadding),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(space = 4.dp),
-        ) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(space = 16.dp),
-                ) {
-                    RssTextField(
-                        value = url,
-                        onValueChange = { newUrl ->
-                            url = newUrl
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = RssFeedIcon,
-                                contentDescription = null,
-                                modifier = Modifier.size(size = 18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        trailingIcon = {
-                            if (url.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        url = ""
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = CloseIcon,
-                                        contentDescription = stringResource(resource = Res.string.clear_input),
-                                        modifier = Modifier.size(size = 18.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                        },
-                    )
+        )
+    }
+}
 
-                    uiState.errorMessage?.let { errorMessage ->
-                        Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall,
+@Composable
+fun AddSourcePanel(
+    modifier: Modifier = Modifier,
+    viewModel: AddSourceViewModel = koinViewModel(),
+    onCloseClick: (() -> Unit)? = null,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(resource = Res.string.add_source_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(weight = 1f),
+                )
+                if (onCloseClick != null) {
+                    IconButton(onClick = onCloseClick) {
+                        Icon(
+                            imageVector = CloseIcon,
+                            contentDescription = stringResource(resource = Res.string.navigate_back),
                         )
                     }
-
-                    RssButton(
-                        text = stringResource(resource = Res.string.add_feed_button),
-                        onClick = {
-                            onAddFeedClick(url)
-                        },
-                        isLoading = uiState.isLoading,
-                        leadingIcon = AddIcon,
-                    )
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(height = 12.dp))
-            }
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
 
-            items(
-                items = uiState.sources,
-                key = { source -> source.id },
-            ) { source ->
-                SourceTile(
-                    name = source.name,
-                    url = source.url,
-                    onDeleteClick = {
-                        onDeleteSourceClick(source)
+            AddSourceContent(
+                uiState = uiState,
+                onAddFeedClick = { url ->
+                    viewModel.onEvent(event = AddSourceUiEvent.AddFeed(url = url))
+                },
+                onDeleteSourceClick = { source ->
+                    viewModel.onEvent(event = AddSourceUiEvent.DeleteSource(source = source))
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+fun AddSourceContent(
+    uiState: AddSourceUiState,
+    onAddFeedClick: (String) -> Unit,
+    onDeleteSourceClick: (SourceUiModel) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var url by remember { mutableStateOf(value = "") }
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+    ) {
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(space = 16.dp),
+            ) {
+                RssTextField(
+                    value = url,
+                    onValueChange = { newUrl ->
+                        url = newUrl
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = RssFeedIcon,
+                            contentDescription = null,
+                            modifier = Modifier.size(size = 18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    trailingIcon = {
+                        if (url.isNotEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    url = ""
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = CloseIcon,
+                                    contentDescription = stringResource(resource = Res.string.clear_input),
+                                    modifier = Modifier.size(size = 18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     },
                 )
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    thickness = 1.dp,
+
+                uiState.errorMessage?.let { errorMessage ->
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+
+                RssButton(
+                    text = stringResource(resource = Res.string.add_feed_button),
+                    onClick = {
+                        onAddFeedClick(url)
+                    },
+                    isLoading = uiState.isLoading,
+                    leadingIcon = AddIcon,
                 )
             }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(height = 12.dp))
+        }
+
+        items(
+            items = uiState.sources,
+            key = { source -> source.id },
+        ) { source ->
+            SourceTile(
+                name = source.name,
+                url = source.url,
+                onDeleteClick = {
+                    onDeleteSourceClick(source)
+                },
+            )
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                thickness = 1.dp,
+            )
         }
     }
 }

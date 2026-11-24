@@ -1,8 +1,11 @@
 package com.jjcr11.rss.presentation.feedsscreen
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -13,13 +16,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jjcr11.rss.presentation.addsourcescreen.AddSourcePanel
 import com.jjcr11.rss.presentation.components.AddIcon
+import com.jjcr11.rss.presentation.components.LocalScreenSize
 import com.jjcr11.rss.presentation.components.SettingsIcon
 import com.jjcr11.rss.presentation.theme.RssTheme
 import com.jjcr11.rss.resources.Res
@@ -56,57 +63,76 @@ fun FeedsScreen(
     onSettingsClick: () -> Unit = {},
     onFeedClick: (FeedUiModel) -> Unit = {},
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = stringResource(resource = Res.string.feeds_title))
-                },
-                actions = {
-                    IconButton(onClick = onAddFeedClick) {
-                        Icon(
-                            imageVector = AddIcon,
-                            contentDescription = stringResource(resource = Res.string.add_feed_action),
-                        )
-                    }
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(
-                            imageVector = SettingsIcon,
-                            contentDescription = stringResource(resource = Res.string.settings_title),
-                        )
-                    }
-                },
+    val screenSize = LocalScreenSize.current
+
+    Row(modifier = modifier.fillMaxSize()) {
+        if (screenSize.isExpanded) {
+            AddSourcePanel(
+                modifier = Modifier
+                    .width(width = 380.dp)
+                    .fillMaxHeight(),
             )
-        },
-    ) { innerPadding ->
-        Box(
+            VerticalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
+        }
+
+        Scaffold(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues = innerPadding),
-        ) {
-            if (uiState.isLoading && uiState.feeds.isEmpty()) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(alignment = Alignment.Center),
+                .weight(weight = 1f)
+                .fillMaxHeight(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(text = stringResource(resource = Res.string.feeds_title))
+                    },
+                    actions = {
+                        if (!screenSize.isExpanded) {
+                            IconButton(onClick = onAddFeedClick) {
+                                Icon(
+                                    imageVector = AddIcon,
+                                    contentDescription = stringResource(resource = Res.string.add_feed_action),
+                                )
+                            }
+                        }
+                        IconButton(onClick = onSettingsClick) {
+                            Icon(
+                                imageVector = SettingsIcon,
+                                contentDescription = stringResource(resource = Res.string.settings_title),
+                            )
+                        }
+                    },
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(
-                        items = uiState.feeds,
-                        key = { feed -> feed.id },
-                    ) { feed ->
-                        FeedTile(
-                            sourceName = feed.sourceName,
-                            title = feed.title,
-                            date = feed.date,
-                            isRead = feed.isRead,
-                            onClick = { onFeedClick(feed) },
-                        )
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                        )
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues = innerPadding),
+            ) {
+                if (uiState.isLoading && uiState.feeds.isEmpty()) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(alignment = Alignment.Center),
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(
+                            items = uiState.feeds,
+                            key = { feed -> feed.id },
+                        ) { feed ->
+                            FeedTile(
+                                sourceName = feed.sourceName,
+                                title = feed.title,
+                                date = feed.date,
+                                isRead = feed.isRead,
+                                onClick = { onFeedClick(feed) },
+                            )
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                            )
+                        }
                     }
                 }
             }

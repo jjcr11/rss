@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.presentation.addsourcescreen.AddSourceRoute
 import com.jjcr11.rss.presentation.authscreen.AuthRoute
+import com.jjcr11.rss.presentation.components.LocalScreenSize
 import com.jjcr11.rss.presentation.feeddetail.FeedDetailRoute
 import com.jjcr11.rss.presentation.feedsscreen.FeedsRoute
 import com.jjcr11.rss.presentation.settingsscreen.SettingsRoute
@@ -32,6 +34,19 @@ fun RssNavHost(
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val isGuestMode by viewModel.isGuestMode.collectAsStateWithLifecycle()
+    val screenSize = LocalScreenSize.current
+
+    LaunchedEffect(
+        key1 = screenSize.isExpanded,
+        block = {
+            if (screenSize.isExpanded) {
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                if (currentRoute == Screen.AddSource.route) {
+                    navController.popBackStack()
+                }
+            }
+        },
+    )
 
     if (authState == AuthState.Initializing || isGuestMode == null) {
         Box(
