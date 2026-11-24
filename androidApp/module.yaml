@@ -12,3 +12,5 @@ settings:
   android:
     namespace: com.jjcr11.rss
     applicationId: com.jjcr11.rss
+    versionCode: 1
+    versionName: "0.1.0"
