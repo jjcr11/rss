@@ -30,8 +30,9 @@ fun RssNavHost(
     viewModel: NavigationViewModel = koinViewModel(),
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val isGuestMode by viewModel.isGuestMode.collectAsStateWithLifecycle()
 
-    if (authState == AuthState.Initializing) {
+    if (authState == AuthState.Initializing || isGuestMode == null) {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -44,7 +45,7 @@ fun RssNavHost(
         }
     } else {
         val startDestination = remember {
-            if (authState is AuthState.Authenticated) {
+            if (authState is AuthState.Authenticated || isGuestMode == true) {
                 Screen.Feeds.route
             } else {
                 Screen.Auth.route
@@ -65,17 +66,13 @@ fun RssNavHost(
                             }
                         }
                     },
-                    /*
-                    // TODO: Implement Guest Mode / Continue without account
                     onContinueWithoutAccountClick = {
-                        viewModel.sync()
                         navController.navigate(route = Screen.Feeds.route) {
                             popUpTo(route = Screen.Auth.route) {
                                 inclusive = true
                             }
                         }
                     },
-                    */
                 )
             }
             composable(route = Screen.Feeds.route) {

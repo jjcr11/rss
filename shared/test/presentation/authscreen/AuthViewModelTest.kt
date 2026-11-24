@@ -2,7 +2,9 @@ package com.jjcr11.rss.presentation.authscreen
 
 import com.jjcr11.rss.domain.model.AuthState
 import com.jjcr11.rss.domain.repository.AuthRepository
+import com.jjcr11.rss.domain.repository.PreferencesRepository
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
+import com.jjcr11.rss.domain.usecase.SetGuestModeUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -48,16 +50,31 @@ class AuthViewModelTest {
         }
     }
 
+    private class FakePreferencesRepository : PreferencesRepository {
+        var lastGuestMode: Boolean? = null
+        override val isGuestMode: Flow<Boolean> = emptyFlow()
+        override suspend fun setGuestMode(isGuestMode: Boolean) {
+            lastGuestMode = isGuestMode
+        }
+    }
+
     private lateinit var repository: FakeAuthRepository
+    private lateinit var preferencesRepository: FakePreferencesRepository
     private lateinit var authenticateWithEmailUseCase: AuthenticateWithEmailUseCase
+    private lateinit var setGuestModeUseCase: SetGuestModeUseCase
     private lateinit var viewModel: AuthViewModel
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         repository = FakeAuthRepository()
+        preferencesRepository = FakePreferencesRepository()
         authenticateWithEmailUseCase = AuthenticateWithEmailUseCase(repository = repository)
-        viewModel = AuthViewModel(authenticateWithEmailUseCase = authenticateWithEmailUseCase)
+        setGuestModeUseCase = SetGuestModeUseCase(repository = preferencesRepository)
+        viewModel = AuthViewModel(
+            authenticateWithEmailUseCase = authenticateWithEmailUseCase,
+            setGuestModeUseCase = setGuestModeUseCase,
+        )
     }
 
     @AfterTest
@@ -176,5 +193,33 @@ class AuthViewModelTest {
 
         assertFalse(actual = viewModel.uiState.value.isSuccess)
         assertNull(actual = viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun onEvent_continueWithoutAccount_setsGuestModeToTrue() = runTest {
+        viewModel.onEvent(event = AuthUiEvent.ContinueWithoutAccount)
+        advanceUntilIdle()
+
+        assertEquals(
+            expected = true,
+            actual = preferencesRepository.lastGuestMode,
+        )
+    }
+
+    @Test
+    fun onEvent_authenticateWithEmail_whenSuccessful_setsGuestModeToFalse() = runTest {
+        viewModel.onEvent(
+            event = AuthUiEvent.AuthenticateWithEmail(
+                email = "user@example.com",
+                password = "password123",
+            ),
+        )
+        advanceUntilIdle()
+
+        assertTrue(actual = viewModel.uiState.value.isSuccess)
+        assertEquals(
+            expected = false,
+            actual = preferencesRepository.lastGuestMode,
+        )
     }
 }

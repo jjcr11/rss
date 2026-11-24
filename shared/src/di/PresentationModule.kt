@@ -33,12 +33,14 @@ val presentationModule = module {
     viewModel {
         AuthViewModel(
             authenticateWithEmailUseCase = get(),
+            setGuestModeUseCase = get(),
         )
     }
     viewModel {
         NavigationViewModel(
             observeAuthStateUseCase = get(),
             syncManager = get(),
+            observeGuestModeUseCase = get(),
         )
     }
 }

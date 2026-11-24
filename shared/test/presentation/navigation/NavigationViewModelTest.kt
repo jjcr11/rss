@@ -7,8 +7,10 @@ import com.jjcr11.rss.domain.model.Source
 import com.jjcr11.rss.domain.model.User
 import com.jjcr11.rss.domain.repository.AuthRepository
 import com.jjcr11.rss.domain.repository.FeedRepository
+import com.jjcr11.rss.domain.repository.PreferencesRepository
 import com.jjcr11.rss.domain.repository.SourceRepository
 import com.jjcr11.rss.domain.usecase.ObserveAuthStateUseCase
+import com.jjcr11.rss.domain.usecase.ObserveGuestModeUseCase
 import com.jjcr11.rss.domain.usecase.SyncFeedsUseCase
 import com.jjcr11.rss.domain.usecase.SyncSourcesUseCase
 import kotlinx.coroutines.Dispatchers
@@ -80,20 +82,33 @@ class NavigationViewModelTest {
         }
     }
 
+    private class FakePreferencesRepository : PreferencesRepository {
+        val guestModeFlow = MutableStateFlow(value = false)
+        override val isGuestMode: Flow<Boolean> = guestModeFlow
+        override suspend fun setGuestMode(isGuestMode: Boolean) {
+            guestModeFlow.value = isGuestMode
+        }
+    }
+
     private lateinit var repository: FakeAuthRepository
+    private lateinit var preferencesRepository: FakePreferencesRepository
     private lateinit var syncManager: FakeSyncManager
     private lateinit var observeAuthStateUseCase: ObserveAuthStateUseCase
+    private lateinit var observeGuestModeUseCase: ObserveGuestModeUseCase
     private lateinit var viewModel: NavigationViewModel
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         repository = FakeAuthRepository()
+        preferencesRepository = FakePreferencesRepository()
         syncManager = FakeSyncManager()
         observeAuthStateUseCase = ObserveAuthStateUseCase(repository = repository)
+        observeGuestModeUseCase = ObserveGuestModeUseCase(repository = preferencesRepository)
         viewModel = NavigationViewModel(
             observeAuthStateUseCase = observeAuthStateUseCase,
             syncManager = syncManager,
+            observeGuestModeUseCase = observeGuestModeUseCase,
         )
     }
 
@@ -105,6 +120,14 @@ class NavigationViewModelTest {
     @Test
     fun initialState_isInitializing() {
         assertEquals(expected = AuthState.Initializing, actual = viewModel.authState.value)
+    }
+
+    @Test
+    fun isGuestMode_whenEmitted_updatesState() = runTest {
+        preferencesRepository.guestModeFlow.value = true
+        advanceUntilIdle()
+
+        assertEquals(expected = true, actual = viewModel.isGuestMode.value)
     }
 
     @Test

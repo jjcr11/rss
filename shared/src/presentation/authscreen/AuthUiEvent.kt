@@ -7,4 +7,6 @@ sealed interface AuthUiEvent {
     ) : AuthUiEvent
 
     data object ClearError : AuthUiEvent
+
+    data object ContinueWithoutAccount : AuthUiEvent
 }

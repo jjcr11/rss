@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.jjcr11.rss.presentation.components.RssFeedIcon
 import com.jjcr11.rss.presentation.components.RssTextField
 import com.jjcr11.rss.presentation.theme.RssTheme
 import com.jjcr11.rss.resources.Res
+import com.jjcr11.rss.resources.continue_without_account_button
 import com.jjcr11.rss.resources.email_placeholder
 import com.jjcr11.rss.resources.password_placeholder
 import com.jjcr11.rss.resources.sign_in_or_sign_up_button
@@ -68,7 +70,10 @@ fun AuthRoute(
             )
         },
         onGoogleSignUpClick = onGoogleSignUpClick,
-        onContinueWithoutAccountClick = onContinueWithoutAccountClick,
+        onContinueWithoutAccountClick = {
+            viewModel.onEvent(event = AuthUiEvent.ContinueWithoutAccount)
+            onContinueWithoutAccountClick()
+        },
     )
 }
 
@@ -78,7 +83,7 @@ fun AuthScreen(
     uiState: AuthUiState = AuthUiState(),
     onSubmitClick: (email: String, password: String) -> Unit = { _, _ -> },
     @Suppress("UNUSED_PARAMETER") onGoogleSignUpClick: () -> Unit = {},
-    @Suppress("UNUSED_PARAMETER") onContinueWithoutAccountClick: () -> Unit = {},
+    onContinueWithoutAccountClick: () -> Unit = {},
 ) {
     var email by remember { mutableStateOf(value = "") }
     var password by remember { mutableStateOf(value = "") }
@@ -183,8 +188,6 @@ fun AuthScreen(
             )
             */
 
-            // TODO: Implement Guest Mode / Continue without account
-            /*
             Spacer(modifier = Modifier.height(height = 8.dp))
 
             TextButton(
@@ -197,7 +200,6 @@ fun AuthScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            */
         }
     }
 }

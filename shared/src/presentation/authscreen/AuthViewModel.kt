@@ -3,6 +3,7 @@ package com.jjcr11.rss.presentation.authscreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jjcr11.rss.domain.usecase.AuthenticateWithEmailUseCase
+import com.jjcr11.rss.domain.usecase.SetGuestModeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,6 +13,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class AuthViewModel(
     private val authenticateWithEmailUseCase: AuthenticateWithEmailUseCase,
+    private val setGuestModeUseCase: SetGuestModeUseCase? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(value = AuthUiState())
@@ -24,6 +26,13 @@ class AuthViewModel(
                 password = event.password,
             )
             AuthUiEvent.ClearError -> clearError()
+            AuthUiEvent.ContinueWithoutAccount -> continueWithoutAccount()
+        }
+    }
+
+    private fun continueWithoutAccount() {
+        viewModelScope.launch {
+            setGuestModeUseCase?.invoke(isGuestMode = true)
         }
     }
 
@@ -44,6 +53,7 @@ class AuthViewModel(
                     email = trimmedEmail,
                     password = trimmedPassword,
                 )
+                setGuestModeUseCase?.invoke(isGuestMode = false)
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
