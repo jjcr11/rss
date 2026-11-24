@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jjcr11.rss.presentation.components.LocalScreenSize
 import com.jjcr11.rss.presentation.components.RssButton
 import com.jjcr11.rss.presentation.components.RssFeedIcon
 import com.jjcr11.rss.presentation.components.RssTextField
@@ -87,6 +90,13 @@ fun AuthScreen(
 ) {
     var email by remember { mutableStateOf(value = "") }
     var password by remember { mutableStateOf(value = "") }
+    val screenSize = LocalScreenSize.current
+
+    val contentModifier = if (screenSize.isCompact) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier.width(width = 400.dp)
+    }
 
     Scaffold(
         modifier = modifier,
@@ -110,95 +120,78 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(height = 32.dp))
 
-            RssTextField(
-                value = email,
-                onValueChange = { newEmail ->
-                    email = newEmail
-                },
-                placeholder = {
-                    Text(
-                        text = stringResource(resource = Res.string.email_placeholder),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next,
-                ),
-            )
-
-            Spacer(modifier = Modifier.height(height = 16.dp))
-
-            RssTextField(
-                value = password,
-                onValueChange = { newPassword ->
-                    password = newPassword
-                },
-                placeholder = {
-                    Text(
-                        text = stringResource(resource = Res.string.password_placeholder),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-            )
-
-            uiState.errorMessage?.let { message ->
-                Spacer(modifier = Modifier.height(height = 8.dp))
-                Text(
-                    text = message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(height = 24.dp))
-
-            RssButton(
-                text = stringResource(resource = Res.string.sign_in_or_sign_up_button),
-                onClick = {
-                    onSubmitClick(email, password)
-                },
-                isLoading = uiState.isLoading,
-            )
-
-            // TODO: Implement Google Sign-In with Supabase Auth
-            /*
-            Spacer(modifier = Modifier.height(height = 16.dp))
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 1.dp,
-            )
-
-            Spacer(modifier = Modifier.height(height = 16.dp))
-
-            RssButton(
-                text = stringResource(resource = Res.string.sign_up_with_google_button),
-                onClick = onGoogleSignUpClick,
-                enabled = !uiState.isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ),
-            )
-            */
-
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            TextButton(
-                onClick = onContinueWithoutAccountClick,
-                enabled = !uiState.isLoading,
+            Column(
+                modifier = contentModifier,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = stringResource(resource = Res.string.continue_without_account_button),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                RssTextField(
+                    value = email,
+                    onValueChange = { newEmail ->
+                        email = newEmail
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(resource = Res.string.email_placeholder),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next,
+                    ),
                 )
+
+                Spacer(modifier = Modifier.height(height = 16.dp))
+
+                RssTextField(
+                    value = password,
+                    onValueChange = { newPassword ->
+                        password = newPassword
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(resource = Res.string.password_placeholder),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
+                )
+
+                uiState.errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(height = 8.dp))
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(height = 24.dp))
+
+                RssButton(
+                    text = stringResource(resource = Res.string.sign_in_or_sign_up_button),
+                    onClick = {
+                        onSubmitClick(email, password)
+                    },
+                    isLoading = uiState.isLoading,
+                )
+
+                Spacer(modifier = Modifier.height(height = 8.dp))
+
+                TextButton(
+                    onClick = onContinueWithoutAccountClick,
+                    enabled = !uiState.isLoading,
+                ) {
+                    Text(
+                        text = stringResource(resource = Res.string.continue_without_account_button),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     }
