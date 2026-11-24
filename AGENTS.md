@@ -113,5 +113,14 @@ Cuando el usuario solicite realizar un commit o preparar commits:
      - DataStore: Restablece las preferencias de usuario (`userPreferencesDataSource.clear()`), desactivando también `isGuestMode`.
   4. Al completarse el cierre de sesión, `RssNavHost` navega a `Screen.Auth`, limpiando el back stack.
 
+---
+
+## Pendientes para el Futuro
+1. **Recursos de Iconos (.svg):** Sustituir gradualmente los vectores programáticos temporales por recursos `.svg` en `composeResources`.
+2. **Acciones en Detalle del Feed (`FeedDetailScreen`):** Incorporar botones de acción en la barra/interfaz para guardar (marcar como guardado/favorito), compartir artículo y abrir el enlace original en el navegador externo.
+3. **Feeds Guardados (`FeedsScreen`):** Agregar botón/filtro en `FeedsScreen` para visualizar exclusivamente los feeds guardados/favoritos.
+4. **Configuraciones Adicionales (`SettingsScreen`):** Añadir opciones de personalización para tamaño de fuente (tipografía) y selector de tema (claro, oscuro, sistema) persistidos en DataStore.
+5. **Descarga de Feeds en Segundo Plano:** Implementar sincronización periódica en segundo plano mediante WorkManager en Android y las APIs correspondientes según la plataforma cuando la app esté cerrada o inactiva.
+
 
 
